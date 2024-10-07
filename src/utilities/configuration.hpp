@@ -1,0 +1,10 @@
+#pragma once
+
+#define WIFI_SSID "-"
+#define WIFI_PASSWORD "-"
+#define WIFI_RECONNECT_DELAY 5000
+#define MAX_RETRY_COUNT 10
+
+#define MQTT_BROKER "-"
+#define MQTT_PORT 1883
+#define MAX_MQTT_RECONNECT_ATTEMPTS 10
