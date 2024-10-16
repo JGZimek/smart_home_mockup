@@ -1,17 +1,14 @@
-#include "wifi_manager.hpp"
+#include "wifi.hpp"
 
 #define NETWORK_TAG "app_network"
-#define MAX_RETRY_COUNT 10
 
-static bool wasConnected = false;
-
-bool initWiFi()
+bool init_wifi()
 {
     WiFi.mode(WIFI_STA);
     WiFi.disconnect();
-    WiFi.onEvent(wifiEventHandler);
+    WiFi.onEvent(wifi_event_handler);
 
-    while (!connectWiFi())
+    while (!connect_wifi())
     {
         ESP_LOGW(NETWORK_TAG, "Initial connection failed. Retrying...");
         vTaskDelay(5000);
@@ -20,25 +17,25 @@ bool initWiFi()
     return true;
 }
 
-bool connectWiFi()
+bool connect_wifi()
 {
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    
-    int retryCount = 0;
-    while (WiFi.status() != WL_CONNECTED && retryCount < MAX_RETRY_COUNT)
+    WiFi.begin(MY_SSID, MY_PASSWORD);
+
+    int retry_count = 0;
+    while (WiFi.status() != WL_CONNECTED && retry_count < MAX_RETRY_COUNT)
     {
-        if (retryCount == 0)
+        if (retry_count == 0)
         {
             ESP_LOGI(NETWORK_TAG, "Attempting to connect to WiFi...");
         }
         delay(1000);
-        retryCount++;
+        retry_count++;
     }
 
     if (WiFi.status() == WL_CONNECTED)
     {
         ESP_LOGI(NETWORK_TAG, "Connected to WiFi: %s", WiFi.SSID().c_str());
-        wasConnected = true;
+        was_connected = true;
         return true;
     }
     else
@@ -48,32 +45,32 @@ bool connectWiFi()
     }
 }
 
-bool reconnectWiFi()
+bool reconnect_wifi()
 {
     if (WiFi.status() != WL_CONNECTED)
     {
         ESP_LOGW(NETWORK_TAG, "Reconnecting to WiFi...");
-        return connectWiFi();
+        return connect_wifi();
     }
     return true;
 }
 
-void handleWiFi()
+void handle_wifi()
 {
     if (WiFi.status() != WL_CONNECTED)
     {
         ESP_LOGW(NETWORK_TAG, "WiFi disconnected, attempting reconnection...");
-        reconnectWiFi();
+        reconnect_wifi();
     }
 
-    if (!wasConnected)
+    if (!was_connected)
     {
         ESP_LOGI(NETWORK_TAG, "WiFi connection restored.");
-        wasConnected = true;
+        was_connected = true;
     }
 }
 
-void wifiEventHandler(WiFiEvent_t event)
+void wifi_event_handler(WiFiEvent_t event)
 {
     switch (event)
     {
@@ -82,19 +79,19 @@ void wifiEventHandler(WiFiEvent_t event)
         break;
     case ARDUINO_EVENT_WIFI_STA_CONNECTED:
         ESP_LOGI(NETWORK_TAG, "WiFi client connected to SSID: %s", WiFi.SSID().c_str());
-        wasConnected = true;
+        was_connected = true;
         break;
     case ARDUINO_EVENT_WIFI_STA_GOT_IP:
         ESP_LOGI(NETWORK_TAG, "WiFi client obtained IP address: %s", WiFi.localIP().toString().c_str());
         break;
     case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
         ESP_LOGE(NETWORK_TAG, "WiFi client disconnected.");
-        wasConnected = false;
-        reconnectWiFi();
+        was_connected = false;
+        reconnect_wifi();
         break;
     case ARDUINO_EVENT_WIFI_STA_LOST_IP:
         ESP_LOGE(NETWORK_TAG, "WiFi client lost IP address.");
-        reconnectWiFi();
+        reconnect_wifi();
         break;
     default:
         ESP_LOGW(NETWORK_TAG, "Unhandled WiFi event.");
