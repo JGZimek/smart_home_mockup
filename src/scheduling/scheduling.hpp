@@ -4,30 +4,19 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-#include "../network/wifi_manager.hpp"
-#include "../communication/mqtt.hpp"
-#include "../communication/mqtt_topics.hpp"
+#include "../wifi/wifi.hpp"
 
 /* Task priorities */
-#define NETWORK_TASK_PRIORITY 0
-#define COMMUNICATION_TASK_PRIORITY 1
+#define WIFI_TASK_PRIORITY 0
 
 /* Core assignments */
-#define NETWORK_CORE 0
-#define COMMUNICATION_CORE 1
+#define WIFI_CORE 0
 
 /* Task stack size */
-#define NETWORK_TASK_STACK_SIZE 4096
-#define COMMUNICATION_TASK_STACK_SIZE 4096
+#define WIFI_TASK_STACK_SIZE 4096
 
 /* Event frequencies in ms */
-#define NETWORK_RECONNECT_FREQ 1000
-#define COMMUNICATION_EVENT_FREQ 1000
-
-// MQTT client and topics
-extern WiFiClient wifiClient;
-extern PubSubClient mqttClient;
-extern mqtt_topics topics;
+#define WIFI_RECONNECT_FREQ 1000
 
 /**
  * @brief Sets up the ESP32 system, initializes components, and starts scheduling.
@@ -44,7 +33,7 @@ bool esp_setup();
  *
  * @return true if initialization was successful, false otherwise.
  */
-bool initScheduling();
+bool init_scheduling();
 
 /**
  * @brief Task to handle network module activities.
@@ -53,13 +42,4 @@ bool initScheduling();
  *
  * @param pvParameters Pointer to parameters passed to the task.
  */
-void networkTask(void *pvParameters);
-
-/**
- * @brief Task to handle communication module activities.
- *
- * This task manages communication functionalities such as MQTT.
- *
- * @param pvParameters Pointer to parameters passed to the task.
- */
-void communicationTask(void *pvParameters);
+void wifiTask(void *pvParameters);
