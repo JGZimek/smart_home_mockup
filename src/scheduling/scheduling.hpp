@@ -5,18 +5,23 @@
 #include "freertos/task.h"
 
 #include "../wifi/wifi.hpp"
+#include "../rfid/rfid.hpp"
 
 /* Task priorities */
 #define WIFI_TASK_PRIORITY 0
+#define RFID_TASK_PRIORITY 1
 
 /* Core assignments */
 #define WIFI_CORE 0
+#define RFID_CORE 1
 
 /* Task stack size */
 #define WIFI_TASK_STACK_SIZE 4096
+#define RFID_TASK_STACK_SIZE 4096
 
 /* Event frequencies in ms */
 #define WIFI_RECONNECT_FREQ 1000
+#define RFID_READ_FREQ 500
 
 /**
  * @brief Sets up the ESP32 system, initializes components, and starts scheduling.
@@ -43,3 +48,12 @@ bool init_scheduling();
  * @param pvParameters Pointer to parameters passed to the task.
  */
 void wifiTask(void *pvParameters);
+
+/**
+ * @brief Task to handle RFID module activities.
+ *
+ * This task manages RFID card reading and processing.
+ *
+ * @param pvParameters Pointer to parameters passed to the task.
+ */
+void rfidTask(void *pvParameters);
