@@ -37,15 +37,6 @@ bool init_pinpad();
 void handle_pinpad();
 
 /**
- * @brief Publishes the entered PIN code to the backend.
- *
- * Sends the entered PIN to the backend for verification.
- *
- * @param pin The PIN entered by the user.
- */
-void publish_pinpad_code(const String &pin);
-
-/**
  * @brief Resets the current PIN entry.
  *
  * Clears the buffer and resets the PIN entry process.

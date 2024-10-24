@@ -5,14 +5,14 @@
 #include <PubSubClient.h>
 
 #define MQTT_TAG "app_mqtt"
-#define MQTT_BROKER "your_mqtt_broker_address" // Zastąp adresem swojego brokera
-#define MQTT_PORT 1883                         // Port MQTT
+#define MQTT_BROKER "your_mqtt_broker_address" // Replace with your broker address
+#define MQTT_PORT 1883                         // MQTT Port
 
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
 
 bool mqtt_connected = false;
-bool alarm_armed = false; // Zmienna globalna
+bool alarm_armed = false; // Global variable
 
 bool init_mqtt()
 {
@@ -22,8 +22,8 @@ bool init_mqtt()
     if (mqttClient.connect("ESP32Client"))
     {
         ESP_LOGI(MQTT_TAG, "Connected to MQTT broker");
-        mqttClient.subscribe(mqtt_topics::buzzer_control_topic); // Subskrypcja tematu do kontroli buzzera
-        mqttClient.subscribe(mqtt_topics::alarm_status_topic);   // Subskrybuj temat statusu alarmu
+        mqttClient.subscribe(mqtt_topics::buzzer_control_topic); // Subscribe to buzzer control topic
+        mqttClient.subscribe(mqtt_topics::alarm_status_topic);   // Subscribe to alarm status topic
         mqtt_connected = true;
         return true;
     }
@@ -39,9 +39,9 @@ void handle_mqtt()
     if (!mqttClient.connected())
     {
         ESP_LOGW(MQTT_TAG, "MQTT connection lost. Reconnecting...");
-        init_mqtt(); // Ponowna inicjalizacja połączenia
+        init_mqtt(); // Reconnect
     }
-    mqttClient.loop(); // Przetwarzanie wiadomości MQTT
+    mqttClient.loop(); // Process MQTT messages
 }
 
 void publish_pir_event(int sensor_index)
@@ -62,7 +62,7 @@ void publish_pir_event(int sensor_index)
 
     if (mqtt_connected)
     {
-        String payload = "{\"value\": 1}"; // Przykładowy payload
+        String payload = "{\"value\": 1}"; // Example payload
         mqttClient.publish(topic, payload.c_str());
         ESP_LOGI(MQTT_TAG, "Published PIR event on topic: %s", topic);
     }
@@ -113,16 +113,16 @@ void mqtt_callback(char *topic, byte *payload, unsigned int length)
     {
         if (message == "{\"alarm_on\": true}")
         {
-            set_buzzer_alarm(true); // Włącz alarm
+            set_buzzer_alarm(true); // Enable the alarm
         }
         else if (message == "{\"alarm_on\": false}")
         {
-            set_buzzer_alarm(false); // Wyłącz alarm
+            set_buzzer_alarm(false); // Disable the alarm
         }
     }
     else if (String(topic) == mqtt_topics::alarm_status_topic)
     {
-        // Aktualizacja stanu alarmu
+        // Update alarm status
         if (message == "{\"alarm_armed\": true}")
         {
             ESP_LOGI(MQTT_TAG, "Alarm armed");

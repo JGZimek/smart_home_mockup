@@ -9,7 +9,7 @@
 /**
  * @brief Global variable indicating if the alarm is armed or not.
  */
-extern bool alarm_armed; // Zmienna globalna
+extern bool alarm_armed; // Global variable
 
 /**
  * @brief Initializes the MQTT client and connects to the broker.

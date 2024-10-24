@@ -1,4 +1,5 @@
 #include "pinpad.hpp"
+#include "../mqtt/mqtt.hpp" // Korzystamy z funkcji do wysyłania kodu po MQTT
 #include "esp_log.h"
 
 #define PINPAD_TAG "app_pinpad"
@@ -39,9 +40,9 @@ void handle_pinpad()
             if (entering_pin && current_pin.length() > 0)
             {
                 ESP_LOGI(PINPAD_TAG, "PIN entry complete: %s", current_pin.c_str());
-                publish_pinpad_code(current_pin); // Send the PIN to the backend
+                publish_pinpad_event(current_pin); // Wywołanie funkcji z modułu MQTT do wysłania kodu
             }
-            reset_pinpad_entry(); // Always reset after PIN submission
+            reset_pinpad_entry(); // Zawsze resetuj po zakończeniu wpisywania PINu
         }
         // Add digit to the PIN if we're in the process of entering it
         else if (entering_pin && isdigit(key))
@@ -56,12 +57,6 @@ void handle_pinpad()
             reset_pinpad_entry();
         }
     }
-}
-
-void publish_pinpad_code(const String &pin)
-{
-    // Placeholder for sending the PIN to the backend via MQTT
-    ESP_LOGI(PINPAD_TAG, "Publishing PIN code (future MQTT integration): %s", pin.c_str());
 }
 
 void reset_pinpad_entry()
