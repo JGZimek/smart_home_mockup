@@ -12,7 +12,7 @@ WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
 
 bool mqtt_connected = false;
-bool alarm_armed = false; // Zmienna do przechowywania stanu alarmu
+bool alarm_armed = false; // Zmienna globalna
 
 bool init_mqtt()
 {

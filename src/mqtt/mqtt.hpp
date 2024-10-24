@@ -7,6 +7,11 @@
 #include "../buzzer/buzzer.hpp"
 
 /**
+ * @brief Global variable indicating if the alarm is armed or not.
+ */
+extern bool alarm_armed; // Zmienna globalna
+
+/**
  * @brief Initializes the MQTT client and connects to the broker.
  *
  * @return true if initialization was successful, false otherwise.
@@ -51,7 +56,7 @@ void publish_pinpad_event(const String &pin_code);
 /**
  * @brief Subscribes to relevant topics and processes incoming MQTT messages.
  *
- * Handles commands from the backend, such as controlling the buzzer.
+ * Handles commands from the backend, such as controlling the buzzer and monitoring the alarm status.
  *
  * @param topic The MQTT topic.
  * @param payload The message payload.

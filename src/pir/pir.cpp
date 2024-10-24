@@ -1,29 +1,26 @@
 #include "pir.hpp"
 #include "esp_log.h"
 #include "../mqtt/mqtt.hpp"
+#include "../buzzer/buzzer.hpp"
 
 #define PIR_TAG "app_pir"
 
 // Ustawienia dla czujników PIR
-const byte pir_pins[] = {32, 33, 34, 35};                       // GPIO piny, do których są podłączone czujniki PIR
+const byte pir_pins[] = {32, 33, 34, 35};                       // GPIO piny czujników PIR
 const int num_sensors = sizeof(pir_pins) / sizeof(pir_pins[0]); // Liczba czujników PIR
 
-// Dynamiczne tablice do przechowywania stanu czujników
-unsigned long last_detection_time[sizeof(pir_pins) / sizeof(pir_pins[0])]; // Przechowuje czas ostatniej detekcji
+unsigned long last_detection_time[num_sensors]; // Czas ostatniej detekcji
 
-// Czas opóźnienia między kolejnymi detekcjami dla każdego czujnika (w milisekundach)
-const int PIR_DELAY_MS = 5000; // Minimum 5 sekund między wykryciami ruchu dla każdego czujnika
+const int PIR_DELAY_MS = 5000; // Opóźnienie między detekcjami (5 sekund)
 
 bool init_pir()
 {
-    // Inicjalizacja pinów PIR i resetowanie czasów detekcji
     for (int i = 0; i < num_sensors; i++)
     {
         pinMode(pir_pins[i], INPUT);
-        last_detection_time[i] = 0; // Inicjalizujemy czasy detekcji na 0
+        last_detection_time[i] = 0; // Resetowanie czasów detekcji
         ESP_LOGI(PIR_TAG, "Initialized PIR sensor on GPIO %d", pir_pins[i]);
     }
-
     return true;
 }
 
@@ -35,15 +32,22 @@ void handle_pir()
     {
         int state = digitalRead(pir_pins[i]);
 
-        // Sprawdź, czy ruch został wykryty i czy upłynął wystarczający czas od ostatniej detekcji
         if (state == HIGH && (current_time - last_detection_time[i] >= PIR_DELAY_MS))
         {
-            ESP_LOGI(PIR_TAG, "Motion detected on PIR sensor %d (GPIO %d)", i, pir_pins[i]);
+            ESP_LOGI(PIR_TAG, "Motion detected on PIR sensor %d (GPIO %d)", i + 1, pir_pins[i]);
 
-            // Wywołaj funkcję publikującą zdarzenie z PIR z modułu MQTT
-            publish_pir_event(i);
+            if (alarm_armed)
+            { // Sprawdzenie, czy alarm jest uzbrojony
+                ESP_LOGI(PIR_TAG, "Alarm is armed. Sending motion detection event and activating buzzer.");
+                publish_pir_event(i + 1); // Publikowanie zdarzenia przez MQTT
+                set_buzzer_alarm(true);   // Aktywacja alarmu (buzzer)
+            }
+            else
+            {
+                ESP_LOGI(PIR_TAG, "Alarm is not armed. No action taken.");
+            }
 
-            last_detection_time[i] = current_time; // Zaktualizuj czas ostatniej detekcji
+            last_detection_time[i] = current_time; // Aktualizacja czasu detekcji
         }
     }
 }
