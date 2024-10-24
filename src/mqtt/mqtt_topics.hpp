@@ -12,4 +12,5 @@ struct mqtt_topics
     static const char *rfid_topic;
     static const char *pinpad_topic;
     static const char *buzzer_control_topic;
+    static const char *alarm_status_topic;
 };

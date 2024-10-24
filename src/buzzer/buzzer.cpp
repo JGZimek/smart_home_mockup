@@ -4,6 +4,8 @@
 #define BUZZER_PIN 23 // GPIO pin where the buzzer is connected
 #define BUZZER_TAG "app_buzzer"
 
+static bool alarm_active = false; // Zmienna, która przechowuje stan alarmu
+
 // Variables to manage beep sequences
 static int beep_duration_ms = 0;
 static int beep_count = 0;
@@ -40,6 +42,15 @@ void handle_buzzer()
             }
         }
     }
+
+    if (alarm_active)
+    {
+        digitalWrite(BUZZER_PIN, HIGH); // If alarm is active, keep the buzzer on
+    }
+    else
+    {
+        digitalWrite(BUZZER_PIN, LOW); // Turn off the buzzer if alarm is not active
+    }
 }
 
 void buzzer_short_beep(int duration_ms)
@@ -63,4 +74,17 @@ void buzzer_beep_sequence(int duration_ms, int count)
     is_beeping = true;
     last_beep_time = millis();
     digitalWrite(BUZZER_PIN, HIGH); // Start the first beep
+}
+
+void set_buzzer_alarm(bool alarm_on)
+{
+    alarm_active = alarm_on; // Set the alarm state based on MQTT message
+    if (alarm_on)
+    {
+        ESP_LOGI(BUZZER_TAG, "Alarm activated");
+    }
+    else
+    {
+        ESP_LOGI(BUZZER_TAG, "Alarm deactivated");
+    }
 }

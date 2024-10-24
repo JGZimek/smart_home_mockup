@@ -45,3 +45,13 @@ void buzzer_long_beep(int duration_ms);
  * @param count The number of beeps to play in the sequence.
  */
 void buzzer_beep_sequence(int duration_ms, int count);
+
+/**
+ * @brief Activates or deactivates the alarm via MQTT.
+ *
+ * This function is triggered by an MQTT message to activate or deactivate
+ * the buzzer for an alarm.
+ *
+ * @param alarm_on Boolean to indicate if the alarm should be activated.
+ */
+void set_buzzer_alarm(bool alarm_on);

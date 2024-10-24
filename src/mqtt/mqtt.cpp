@@ -11,19 +11,19 @@
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
 
-// Flaga połączenia MQTT
 bool mqtt_connected = false;
+bool alarm_armed = false; // Zmienna do przechowywania stanu alarmu
 
 bool init_mqtt()
 {
     mqttClient.setServer(MQTT_BROKER, MQTT_PORT);
     mqttClient.setCallback(mqtt_callback);
 
-    // Próba połączenia z brokerem
     if (mqttClient.connect("ESP32Client"))
     {
         ESP_LOGI(MQTT_TAG, "Connected to MQTT broker");
         mqttClient.subscribe(mqtt_topics::buzzer_control_topic); // Subskrypcja tematu do kontroli buzzera
+        mqttClient.subscribe(mqtt_topics::alarm_status_topic);   // Subskrybuj temat statusu alarmu
         mqtt_connected = true;
         return true;
     }
@@ -111,15 +111,27 @@ void mqtt_callback(char *topic, byte *payload, unsigned int length)
 
     if (String(topic) == mqtt_topics::buzzer_control_topic)
     {
-        if (message == "{\"value\": 1}")
+        if (message == "{\"alarm_on\": true}")
         {
-            // Włącz buzzer
-            buzzer_short_beep(200);
+            set_buzzer_alarm(true); // Włącz alarm
         }
-        else if (message == "{\"value\": 0}")
+        else if (message == "{\"alarm_on\": false}")
         {
-            // Wyłącz buzzer
-            // (Opcjonalnie, wyłączanie buzzera)
+            set_buzzer_alarm(false); // Wyłącz alarm
+        }
+    }
+    else if (String(topic) == mqtt_topics::alarm_status_topic)
+    {
+        // Aktualizacja stanu alarmu
+        if (message == "{\"alarm_armed\": true}")
+        {
+            ESP_LOGI(MQTT_TAG, "Alarm armed");
+            alarm_armed = true;
+        }
+        else if (message == "{\"alarm_armed\": false}")
+        {
+            ESP_LOGI(MQTT_TAG, "Alarm disarmed");
+            alarm_armed = false;
         }
     }
 }
