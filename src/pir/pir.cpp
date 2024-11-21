@@ -6,7 +6,7 @@
 #define PIR_TAG "app_pir"
 
 // Ustawienia dla czujników PIR
-const byte pir_pins[] = {32, 33, 34, 35};                       // GPIO piny czujników PIR
+const byte pir_pins[] = {34};                       // GPIO piny czujników PIR
 const int num_sensors = sizeof(pir_pins) / sizeof(pir_pins[0]); // Liczba czujników PIR
 
 unsigned long last_detection_time[num_sensors]; // Czas ostatniej detekcji

@@ -5,8 +5,8 @@
 #include <PubSubClient.h>
 
 #define MQTT_TAG "app_mqtt"
-#define MQTT_BROKER "your_mqtt_broker_address" // Replace with your broker address
-#define MQTT_PORT 1883                         // MQTT Port
+#define MQTT_BROKER "192.168.1.40" // Adres IP Twojego brokera MQTT
+#define MQTT_PORT 1885             // Port MQTT, który teraz używamy
 
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);

@@ -6,7 +6,7 @@
 #include "esp_log.h"
 
 #define RST_PIN 22 // Configurable pin for RC522 reset
-#define SS_PIN 21   // Configurable pin for RC522 SS (Slave Select)
+#define SS_PIN 5   // Configurable pin for RC522 SS (Slave Select)
 
 /**
  * @brief Initializes the RFID reader (RC522 module).

@@ -4,8 +4,8 @@
 #include <WiFi.h>
 
 #define MAX_RETRY_COUNT 10
-#define MY_SSID "-"
-#define MY_PASSWORD "-"
+#define MY_SSID "NETIASPOT-2.4GHz-38D874"
+#define MY_PASSWORD "7DkWRuSPPZ5n"
 
 static bool was_connected = false;
 
