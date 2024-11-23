@@ -1,4 +1,5 @@
 #include "rfid.hpp"
+#include "../mqtt/mqtt.hpp" // Dodaj ten include, aby używać publish_rfid_event
 #include "esp_log.h"
 
 #define RFID_TAG "app_rfid"
@@ -27,9 +28,9 @@ void handle_RFID()
             uid += String(rfid.uid.uidByte[i], HEX);
         }
 
-        print_RFID_UID();
-        publish_RFID_UID(uid);
-        stop_RFID_communication();
+        print_RFID_UID();          // Logowanie UID
+        publish_RFID_UID(uid);     // Publikowanie UID na MQTT
+        stop_RFID_communication(); // Zakończenie komunikacji z kartą
     }
 }
 
@@ -47,8 +48,15 @@ bool read_RFID()
 
 void publish_RFID_UID(const String &uid)
 {
-    ESP_LOGI(RFID_TAG, "Placeholder: Publishing RFID UID.");
-    // ESP_LOGI(RFID_TAG, "UID: %s", uid.c_str());
+    if (!uid.isEmpty()) // Upewnij się, że UID nie jest pusty
+    {
+        publish_rfid_event(uid); // Wywołanie funkcji publikującej z mqtt.cpp
+        ESP_LOGI(RFID_TAG, "Published RFID UID to MQTT: %s", uid.c_str());
+    }
+    else
+    {
+        ESP_LOGW(RFID_TAG, "Cannot publish empty RFID UID.");
+    }
 }
 
 void print_RFID_UID()
