@@ -5,8 +5,9 @@
 #include <MFRC522.h>
 #include "esp_log.h"
 
-#define RST_PIN 22 // Configurable pin for RC522 reset
-#define SS_PIN 5   // Configurable pin for RC522 SS (Slave Select)
+#define RST_PIN 22  // Configurable pin for RC522 reset
+#define SS_PIN 5    // Configurable pin for RC522 SS (Slave Select)
+#define LED_RFID 15 // GPIO pin where the LED is connected
 
 /**
  * @brief Initializes the RFID reader (RC522 module).
@@ -60,3 +61,5 @@ void print_RFID_UID();
  * Logs the stop action using ESP_LOG.
  */
 void stop_RFID_communication();
+
+void light_up_LED();

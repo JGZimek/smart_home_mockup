@@ -16,7 +16,10 @@ static bool entering_pin = false; // Indicates if we're in the process of enteri
 
 bool init_pinpad()
 {
-    ESP_LOGI(PINPAD_TAG, "Pinpad initialized.");
+    pinMode(LED_PIN, OUTPUT);   // Initialize LED2 pin as output
+    digitalWrite(LED_PIN, LOW); // Ensure LED2 is off initially
+
+    ESP_LOGI(PINPAD_TAG, "Pinpad and LED2 initialized.");
     return true;
 }
 
@@ -41,6 +44,7 @@ void handle_pinpad()
             {
                 ESP_LOGI(PINPAD_TAG, "PIN entry complete: %s", current_pin.c_str());
                 publish_pinpad_event(current_pin); // Wywołanie funkcji z modułu MQTT do wysłania kodu
+                light_up_LED_PIN();
             }
             reset_pinpad_entry(); // Zawsze resetuj po zakończeniu wpisywania PINu
         }
@@ -64,4 +68,13 @@ void reset_pinpad_entry()
     current_pin = "";
     entering_pin = false;
     ESP_LOGI(PINPAD_TAG, "PIN entry reset.");
+}
+
+void light_up_LED_PIN()
+{
+    digitalWrite(LED_PIN, HIGH); // Turn on LED
+    ESP_LOGI(PINPAD_TAG, "LED turned ON after PIN submission.");
+
+    delay(1000);                 // Keep LED on for 1 second
+    digitalWrite(LED_PIN, LOW); // Turn off LED
 }

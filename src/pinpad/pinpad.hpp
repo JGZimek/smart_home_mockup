@@ -8,6 +8,8 @@
 #define ROW_NUM 4    // Four rows
 #define COLUMN_NUM 4 // Four columns
 
+#define LED_PIN 2
+
 // Declare row and column pins as extern
 extern byte ROW_PINS[ROW_NUM];    // GPIO pins connected to row pins
 extern byte COL_PINS[COLUMN_NUM]; // GPIO pins connected to column pins
@@ -42,3 +44,5 @@ void handle_pinpad();
  * Clears the buffer and resets the PIN entry process.
  */
 void reset_pinpad_entry();
+
+void light_up_LED_PIN();

@@ -5,8 +5,8 @@
 #include <PubSubClient.h>
 
 #define MQTT_TAG "app_mqtt"
-#define MQTT_BROKER "192.168.50.73" // Adres IP Twojego brokera MQTT
-#define MQTT_PORT 1885             // Port MQTT, który teraz używamy
+#define MQTT_BROKER "192.168.152.72" // Adres IP Twojego brokera MQTT
+#define MQTT_PORT 1885               // Port MQTT, który teraz używamy
 
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
@@ -111,11 +111,11 @@ void mqtt_callback(char *topic, byte *payload, unsigned int length)
 
     if (String(topic) == mqtt_topics::buzzer_control_topic)
     {
-        if (message == "{\"value\": true}")
+        if (message == "{\"value\": 1}")
         {
             set_buzzer_alarm(true); // Enable the alarm
         }
-        else if (message == "{\"value\": false}")
+        else if (message == "{\"value\": 0}")
         {
             set_buzzer_alarm(false); // Disable the alarm
         }

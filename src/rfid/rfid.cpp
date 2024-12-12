@@ -14,7 +14,10 @@ bool init_RFID()
     rfid.PCD_Init();
     ESP_LOGI(RFID_TAG, "RFID reader PCD_Init called");
 
-    ESP_LOGI(RFID_TAG, "RFID reader initialized successfully.");
+    pinMode(LED_RFID, OUTPUT);   // Initialize LED pin as output
+    digitalWrite(LED_RFID, LOW); // Ensure LED is off initially
+
+    ESP_LOGI(RFID_TAG, "RFID reader and LED initialized successfully.");
     return true;
 }
 
@@ -30,6 +33,7 @@ void handle_RFID()
 
         print_RFID_UID();          // Logowanie UID
         publish_RFID_UID(uid);     // Publikowanie UID na MQTT
+        light_up_LED();            // Zapalanie diody
         stop_RFID_communication(); // Zakończenie komunikacji z kartą
     }
 }
@@ -74,4 +78,13 @@ void stop_RFID_communication()
     rfid.PICC_HaltA();
     rfid.PCD_StopCrypto1();
     ESP_LOGV(RFID_TAG, "Stopped communication with the RFID card.");
+}
+
+void light_up_LED()
+{
+    digitalWrite(LED_RFID, HIGH); // Turn the LED on
+    ESP_LOGI(RFID_TAG, "LED turned ON to indicate successful RFID read.");
+
+    delay(1000);                // Keep LED on for 1 second
+    digitalWrite(LED_RFID, LOW); // Turn the LED off
 }
