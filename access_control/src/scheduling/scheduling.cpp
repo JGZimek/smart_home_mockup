@@ -33,11 +33,11 @@ bool esp_setup()
         return false;
     }
 
-    if (!init_mqtt())
-    {
-        ESP_LOGE(SCHEDULING_TAG, "Failed to initialize MQTT");
-        return false;
-    }
+    // if (!init_mqtt())
+    // {
+    //     ESP_LOGE(SCHEDULING_TAG, "Failed to initialize MQTT");
+    //     return false;
+    // }
 
     if (!init_scheduling())
     {
@@ -148,20 +148,20 @@ bool init_scheduling()
         return false;
     }
 
-    result = xTaskCreatePinnedToCore(
-        mqttTask,
-        "MQTT Task",
-        MQTT_TASK_STACK_SIZE,
-        NULL,
-        MQTT_TASK_PRIORITY,
-        &mqttTaskHandle,
-        MQTT_CORE);
+    // result = xTaskCreatePinnedToCore(
+    //     mqttTask,
+    //     "MQTT Task",
+    //     MQTT_TASK_STACK_SIZE,
+    //     NULL,
+    //     MQTT_TASK_PRIORITY,
+    //     &mqttTaskHandle,
+    //     MQTT_CORE);
 
-    if (result != pdPASS)
-    {
-        ESP_LOGE(SCHEDULING_TAG, "Failed to create MQTT Task");
-        return false;
-    }
+    // if (result != pdPASS)
+    // {
+    //     ESP_LOGE(SCHEDULING_TAG, "Failed to create MQTT Task");
+    //     return false;
+    // }
 
     result = xTaskCreatePinnedToCore(
         buttonTask,

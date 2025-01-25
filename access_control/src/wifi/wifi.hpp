@@ -4,8 +4,8 @@
 #include <WiFi.h>
 
 #define MAX_RETRY_COUNT 10
-#define MY_SSID "jack-spot"
-#define MY_PASSWORD "smart-home"
+#define MY_SSID "jackspot"
+#define MY_PASSWORD "Jacek123"
 
 static bool was_connected = false;
 

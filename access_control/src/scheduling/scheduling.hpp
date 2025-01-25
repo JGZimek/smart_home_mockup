@@ -40,7 +40,7 @@
 #define BUTTON_READ_FREQ 10
 
 /* Button configuration */
-#define BUTTON_PIN 0 // Define the GPIO pin for the button
+#define BUTTON_PIN 2 // Define the GPIO pin for the button
 
 /**
  * @brief Sets up the ESP32 system, initializes components, and starts scheduling.

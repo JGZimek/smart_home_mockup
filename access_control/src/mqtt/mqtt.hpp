@@ -3,7 +3,17 @@
 #include <Arduino.h>
 #include <WiFiClient.h>
 #include <PubSubClient.h>
-#include "mqtt_topics.hpp"
+
+/**
+ * @brief Structure to manage MQTT topics for various modules.
+ *
+ * This structure holds all MQTT topics used by the system.
+ */
+struct mqtt_topics
+{
+    static const char *rfid_topic;
+    static const char *pinpad_topic;
+};
 
 /**
  * @brief Global variable indicating if the alarm is armed or not.

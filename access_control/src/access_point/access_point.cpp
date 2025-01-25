@@ -58,11 +58,14 @@ void AccessPoint::handleSave()
         String password = server.arg("password");
         String mqtt = server.arg("mqtt");
 
-        // Here, you can save the credentials to persistent storage
+        // Save credentials and stop the Access Point
         Serial.printf("Saved settings: SSID=%s, PASSWORD=%s, MQTT=%s\n", ssid.c_str(), password.c_str(), mqtt.c_str());
 
         server.send(200, "text/html",
-                    "<html><body><h1>Settings Saved</h1></body></html>");
+                    "<html><body><h1>Settings Saved. AP will stop now.</h1></body></html>");
+
+        // Stop the Access Point
+        stop();
     }
     else
     {

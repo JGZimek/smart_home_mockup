@@ -1,5 +1,4 @@
 #include "mqtt.hpp"
-#include "mqtt_topics.hpp"
 #include "esp_log.h"
 #include <WiFi.h>
 #include <PubSubClient.h>
@@ -10,6 +9,10 @@
 
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
+
+// Definiowanie tematów MQTT
+const char *mqtt_topics::rfid_topic = "smarthome/security/RFID/data";
+const char *mqtt_topics::pinpad_topic = "smarthome/security/pinpad/data";
 
 bool mqtt_connected = false;
 

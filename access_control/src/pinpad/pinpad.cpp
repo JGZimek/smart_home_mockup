@@ -16,10 +16,6 @@ static bool entering_pin = false; // Indicates if we're in the process of enteri
 
 bool init_pinpad()
 {
-    pinMode(LED_PIN, OUTPUT);   // Initialize LED2 pin as output
-    digitalWrite(LED_PIN, LOW); // Ensure LED2 is off initially
-
-    ESP_LOGI(PINPAD_TAG, "Pinpad and LED2 initialized.");
     return true;
 }
 
