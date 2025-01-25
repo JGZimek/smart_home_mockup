@@ -8,30 +8,39 @@
 #include "../rfid/rfid.hpp"
 #include "../pinpad/pinpad.hpp"
 #include "../mqtt/mqtt.hpp"
+#include "../button/button.hpp"
+#include "../access_point/access_point.hpp"
 
 /* Task priorities */
 #define WIFI_TASK_PRIORITY 0
 #define RFID_TASK_PRIORITY 1
 #define PINPAD_TASK_PRIORITY 2
 #define MQTT_TASK_PRIORITY 5
+#define BUTTON_TASK_PRIORITY 3
 
 /* Core assignments */
 #define WIFI_CORE 0
 #define RFID_CORE 1
 #define PINPAD_CORE 0
 #define MQTT_CORE 0
+#define BUTTON_CORE 1
 
 /* Task stack size */
 #define WIFI_TASK_STACK_SIZE 4096
 #define RFID_TASK_STACK_SIZE 4096
 #define PINPAD_TASK_STACK_SIZE 4096
 #define MQTT_TASK_STACK_SIZE 4096
+#define BUTTON_TASK_STACK_SIZE 2048
 
 /* Event frequencies in ms */
 #define WIFI_RECONNECT_FREQ 1000
 #define RFID_READ_FREQ 300
 #define PINPAD_READ_FREQ 100
 #define MQTT_READ_FREQ 100
+#define BUTTON_READ_FREQ 10
+
+/* Button configuration */
+#define BUTTON_PIN 0 // Define the GPIO pin for the button
 
 /**
  * @brief Sets up the ESP32 system, initializes components, and starts scheduling.
@@ -85,3 +94,19 @@ void pinpadTask(void *pvParameters);
  * @param pvParameters Pointer to parameters passed to the task.
  */
 void mqttTask(void *pvParameters);
+
+/**
+ * @brief Task to handle button module activities.
+ *
+ * This task checks for button long press events and triggers corresponding actions.
+ *
+ * @param pvParameters Pointer to parameters passed to the task.
+ */
+void buttonTask(void *pvParameters);
+
+/**
+ * @brief Function to start Access Point mode.
+ *
+ * This function initiates the Access Point mode for the ESP32.
+ */
+void startAccessPointMode();

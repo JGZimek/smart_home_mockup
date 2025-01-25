@@ -33,7 +33,6 @@ void handle_RFID()
 
         print_RFID_UID();          // Logowanie UID
         publish_RFID_UID(uid);     // Publikowanie UID na MQTT
-        light_up_LED();            // Zapalanie diody
         stop_RFID_communication(); // Zakończenie komunikacji z kartą
     }
 }

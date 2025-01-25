@@ -6,9 +6,15 @@ TaskHandle_t wifiTaskHandle = NULL;
 TaskHandle_t rfidTaskHandle = NULL;
 TaskHandle_t pinpadTaskHandle = NULL;
 TaskHandle_t mqttTaskHandle = NULL;
+TaskHandle_t buttonTaskHandle = NULL;
+
+Button button(BUTTON_PIN);
+AccessPoint accessPoint("ESP_AP", "password123");
 
 bool esp_setup()
 {
+    button.begin();
+
     if (!init_wifi())
     {
         ESP_LOGE(SCHEDULING_TAG, "Failed to initialize WiFi");
@@ -78,6 +84,19 @@ void mqttTask(void *pvParameters)
     }
 }
 
+void buttonTask(void *pvParameters)
+{
+    while (1)
+    {
+        if (button.isLongPressed())
+        {
+            ESP_LOGI(SCHEDULING_TAG, "Button long press detected. Triggering AP mode...");
+            startAccessPointMode();
+        }
+        vTaskDelay(BUTTON_READ_FREQ / portTICK_PERIOD_MS);
+    }
+}
+
 bool init_scheduling()
 {
     ESP_LOGI(SCHEDULING_TAG, "Initializing scheduling...");
@@ -144,6 +163,32 @@ bool init_scheduling()
         return false;
     }
 
+    result = xTaskCreatePinnedToCore(
+        buttonTask,
+        "Button Task",
+        BUTTON_TASK_STACK_SIZE,
+        NULL,
+        BUTTON_TASK_PRIORITY,
+        &buttonTaskHandle,
+        BUTTON_CORE);
+
+    if (result != pdPASS)
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Failed to create Button Task");
+        return false;
+    }
+
     ESP_LOGI(SCHEDULING_TAG, "Scheduling initialized successfully.");
     return true;
+}
+
+void startAccessPointMode()
+{
+    ESP_LOGI(SCHEDULING_TAG, "Starting Access Point mode...");
+    accessPoint.start();
+    while (true)
+    {
+        accessPoint.handleRequests();
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+    }
 }
