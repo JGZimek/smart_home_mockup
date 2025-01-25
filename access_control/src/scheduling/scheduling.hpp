@@ -105,8 +105,10 @@ void mqttTask(void *pvParameters);
 void buttonTask(void *pvParameters);
 
 /**
- * @brief Function to start Access Point mode.
+ * @brief Initializes remaining modules after WiFi and MQTT are ready.
  *
- * This function initiates the Access Point mode for the ESP32.
+ * This function initializes RFID, pinpad, and scheduling.
+ *
+ * @return true if all modules are initialized successfully, false otherwise.
  */
-void startAccessPointMode();
+bool initialize_remaining_modules();

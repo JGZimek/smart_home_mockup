@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <WebServer.h>
+#include <Preferences.h>
 
 class AccessPoint
 {
@@ -23,6 +24,11 @@ public:
      * @brief Handles HTTP server requests. To be called in the main loop.
      */
     void handleRequests();
+
+    /**
+     * @brief Runs the Access Point mode and waits for valid credentials.
+     */
+    void run();
 
 private:
     const char *ssid;

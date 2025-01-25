@@ -15,12 +15,52 @@ bool esp_setup()
 {
     button.begin();
 
-    if (!init_wifi())
+    // Sprawdzanie, czy dane WiFi już istnieją
+    Preferences preferences;
+    preferences.begin("wifi", true);                              // Tryb odczytu
+    bool isConfigured = preferences.getBool("configured", false); // Flaga konfiguracji
+    preferences.end();
+
+    if (!isConfigured)
     {
-        ESP_LOGE(SCHEDULING_TAG, "Failed to initialize WiFi");
-        return false;
+        // Pierwsze uruchomienie – brak danych, uruchom tryb AP
+        ESP_LOGI(SCHEDULING_TAG, "Device not configured. Starting in Access Point mode...");
+        accessPoint.run(); // Czeka na zapisanie danych WiFi
     }
 
+    while (true)
+    {
+        // Próba połączenia z WiFi
+        ESP_LOGI(SCHEDULING_TAG, "Attempting to connect to WiFi...");
+        if (init_wifi())
+        {
+            ESP_LOGI(SCHEDULING_TAG, "Connected to WiFi successfully!");
+
+            // Inicjalizacja pozostałych modułów
+            if (initialize_remaining_modules())
+            {
+                ESP_LOGI(SCHEDULING_TAG, "All modules initialized successfully!");
+                break; // Program gotowy do działania
+            }
+            else
+            {
+                ESP_LOGE(SCHEDULING_TAG, "Failed to initialize some modules. Restarting Access Point...");
+                accessPoint.run(); // Uruchom ponownie AP do poprawienia danych
+            }
+        }
+        else
+        {
+            ESP_LOGW(SCHEDULING_TAG, "Failed to connect to WiFi. Restarting Access Point...");
+            accessPoint.run(); // Uruchom ponownie AP do poprawienia danych
+        }
+    }
+
+    return true;
+}
+
+bool initialize_remaining_modules()
+{
+    // Inicjalizacja pozostałych modułów
     if (!init_RFID())
     {
         ESP_LOGE(SCHEDULING_TAG, "Failed to initialize RFID");
@@ -32,12 +72,6 @@ bool esp_setup()
         ESP_LOGE(SCHEDULING_TAG, "Failed to initialize Pinpad");
         return false;
     }
-
-    // if (!init_mqtt())
-    // {
-    //     ESP_LOGE(SCHEDULING_TAG, "Failed to initialize MQTT");
-    //     return false;
-    // }
 
     if (!init_scheduling())
     {
@@ -91,7 +125,7 @@ void buttonTask(void *pvParameters)
         if (button.isLongPressed())
         {
             ESP_LOGI(SCHEDULING_TAG, "Button long press detected. Triggering AP mode...");
-            startAccessPointMode();
+            accessPoint.run();
         }
         vTaskDelay(BUTTON_READ_FREQ / portTICK_PERIOD_MS);
     }
@@ -180,15 +214,4 @@ bool init_scheduling()
 
     ESP_LOGI(SCHEDULING_TAG, "Scheduling initialized successfully.");
     return true;
-}
-
-void startAccessPointMode()
-{
-    ESP_LOGI(SCHEDULING_TAG, "Starting Access Point mode...");
-    accessPoint.start();
-    while (true)
-    {
-        accessPoint.handleRequests();
-        vTaskDelay(10 / portTICK_PERIOD_MS);
-    }
 }
