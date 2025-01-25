@@ -4,7 +4,6 @@
 #include <WiFiClient.h>
 #include <PubSubClient.h>
 #include "mqtt_topics.hpp"
-#include "../buzzer/buzzer.hpp"
 
 /**
  * @brief Global variable indicating if the alarm is armed or not.
@@ -25,15 +24,6 @@ bool init_mqtt();
  * and handle incoming and outgoing messages.
  */
 void handle_mqtt();
-
-/**
- * @brief Publishes a PIR event to the backend.
- *
- * Sends the PIR motion detection event to the backend for further processing.
- *
- * @param sensor_index The index of the PIR sensor that detected motion.
- */
-void publish_pir_event(int sensor_index);
 
 /**
  * @brief Publishes an RFID event to the backend.

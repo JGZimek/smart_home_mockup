@@ -44,5 +44,3 @@ void handle_pinpad();
  * Clears the buffer and resets the PIN entry process.
  */
 void reset_pinpad_entry();
-
-void light_up_LED_PIN();

@@ -79,12 +79,3 @@ void stop_RFID_communication()
     rfid.PCD_StopCrypto1();
     ESP_LOGV(RFID_TAG, "Stopped communication with the RFID card.");
 }
-
-void light_up_LED()
-{
-    digitalWrite(LED_RFID, HIGH); // Turn the LED on
-    ESP_LOGI(RFID_TAG, "LED turned ON to indicate successful RFID read.");
-
-    delay(1000);                // Keep LED on for 1 second
-    digitalWrite(LED_RFID, LOW); // Turn the LED off
-}

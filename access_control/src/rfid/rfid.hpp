@@ -61,5 +61,3 @@ void print_RFID_UID();
  * Logs the stop action using ESP_LOG.
  */
 void stop_RFID_communication();
-
-void light_up_LED();

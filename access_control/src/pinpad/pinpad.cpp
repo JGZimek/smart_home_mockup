@@ -43,8 +43,7 @@ void handle_pinpad()
             if (entering_pin && current_pin.length() > 0)
             {
                 ESP_LOGI(PINPAD_TAG, "PIN entry complete: %s", current_pin.c_str());
-                publish_pinpad_event(current_pin); // Wywołanie funkcji z modułu MQTT do wysłania kodu
-                light_up_LED_PIN();
+                publish_pinpad_event(current_pin); // Wywołanie funkcji z modułu MQTT do wysłania kodu PIN
             }
             reset_pinpad_entry(); // Zawsze resetuj po zakończeniu wpisywania PINu
         }
@@ -68,13 +67,4 @@ void reset_pinpad_entry()
     current_pin = "";
     entering_pin = false;
     ESP_LOGI(PINPAD_TAG, "PIN entry reset.");
-}
-
-void light_up_LED_PIN()
-{
-    digitalWrite(LED_PIN, HIGH); // Turn on LED
-    ESP_LOGI(PINPAD_TAG, "LED turned ON after PIN submission.");
-
-    delay(1000);                 // Keep LED on for 1 second
-    digitalWrite(LED_PIN, LOW); // Turn off LED
 }

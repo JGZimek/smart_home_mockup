@@ -5,8 +5,6 @@
 TaskHandle_t wifiTaskHandle = NULL;
 TaskHandle_t rfidTaskHandle = NULL;
 TaskHandle_t pinpadTaskHandle = NULL;
-TaskHandle_t buzzerTaskHandle = NULL;
-TaskHandle_t pirTaskHandle = NULL;
 TaskHandle_t mqttTaskHandle = NULL;
 
 bool esp_setup()
@@ -26,18 +24,6 @@ bool esp_setup()
     if (!init_pinpad())
     {
         ESP_LOGE(SCHEDULING_TAG, "Failed to initialize Pinpad");
-        return false;
-    }
-
-    if (!init_buzzer())
-    {
-        ESP_LOGE(SCHEDULING_TAG, "Failed to initialize Buzzer");
-        return false;
-    }
-
-    if (!init_pir())
-    {
-        ESP_LOGE(SCHEDULING_TAG, "Failed to initialize PIR");
         return false;
     }
 
@@ -80,24 +66,6 @@ void pinpadTask(void *pvParameters)
     {
         handle_pinpad();
         vTaskDelay(PINPAD_READ_FREQ / portTICK_PERIOD_MS);
-    }
-}
-
-void buzzerTask(void *pvParameters)
-{
-    while (1)
-    {
-        handle_buzzer();
-        vTaskDelay(BUZZER_READ_FREQ / portTICK_PERIOD_MS);
-    }
-}
-
-void pirTask(void *pvParameters)
-{
-    while (1)
-    {
-        handle_pir();
-        vTaskDelay(PIR_READ_FREQ / portTICK_PERIOD_MS);
     }
 }
 
@@ -158,36 +126,6 @@ bool init_scheduling()
     if (result != pdPASS)
     {
         ESP_LOGE(SCHEDULING_TAG, "Failed to create Pinpad Task");
-        return false;
-    }
-
-    result = xTaskCreatePinnedToCore(
-        buzzerTask,
-        "Buzzer Task",
-        BUZZER_TASK_STACK_SIZE,
-        NULL,
-        BUZZER_TASK_PRIORITY,
-        &buzzerTaskHandle,
-        BUZZER_CORE);
-
-    if (result != pdPASS)
-    {
-        ESP_LOGE(SCHEDULING_TAG, "Failed to create Buzzer Task");
-        return false;
-    }
-
-    result = xTaskCreatePinnedToCore(
-        pirTask,
-        "PIR Task",
-        PIR_TASK_STACK_SIZE,
-        NULL,
-        PIR_TASK_PRIORITY,
-        &pirTaskHandle,
-        PIR_CORE);
-
-    if (result != pdPASS)
-    {
-        ESP_LOGE(SCHEDULING_TAG, "Failed to create PIR Task");
         return false;
     }
 
