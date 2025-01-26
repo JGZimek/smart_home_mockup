@@ -1,11 +1,10 @@
 #include "mqtt.hpp"
 #include "esp_log.h"
+#include <Preferences.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
 
 #define MQTT_TAG "app_mqtt"
-#define MQTT_BROKER "192.168.152.72" // Adres IP Twojego brokera MQTT
-#define MQTT_PORT 1885               // Port MQTT, który teraz używamy
 
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
@@ -16,20 +15,45 @@ const char *mqtt_topics::pinpad_topic = "smarthome/security/pinpad/data";
 
 bool mqtt_connected = false;
 
+MqttConfig read_mqtt_config()
+{
+    MqttConfig config = {"", 1883, "ESP32Client"}; // Domyślne wartości
+
+    Preferences preferences;
+    preferences.begin("wifi", true); // Tryb odczytu
+    config.broker = preferences.getString("mqtt_broker", "");
+    config.port = preferences.getInt("mqtt_port", 1883);
+    config.clientId = preferences.getString("mqtt_client_id", "ESP32Client");
+    preferences.end();
+
+    return config;
+}
+
 bool init_mqtt()
 {
-    mqttClient.setServer(MQTT_BROKER, MQTT_PORT);
+    MqttConfig config = read_mqtt_config();
+
+    if (config.broker.isEmpty())
+    {
+        ESP_LOGE(MQTT_TAG, "MQTT broker address is not configured.");
+        return false;
+    }
+
+    mqttClient.setServer(config.broker.c_str(), config.port);
     mqttClient.setCallback(mqtt_callback);
 
-    if (mqttClient.connect("ESP32Client"))
+    ESP_LOGI(MQTT_TAG, "Connecting to MQTT broker %s:%d with client ID %s...",
+             config.broker.c_str(), config.port, config.clientId.c_str());
+
+    if (mqttClient.connect(config.clientId.c_str()))
     {
-        ESP_LOGI(MQTT_TAG, "Connected to MQTT broker");
+        ESP_LOGI(MQTT_TAG, "Connected to MQTT broker.");
         mqtt_connected = true;
         return true;
     }
     else
     {
-        ESP_LOGE(MQTT_TAG, "Failed to connect to MQTT broker");
+        ESP_LOGE(MQTT_TAG, "Failed to connect to MQTT broker.");
         return false;
     }
 }
@@ -39,7 +63,10 @@ void handle_mqtt()
     if (!mqttClient.connected())
     {
         ESP_LOGW(MQTT_TAG, "MQTT connection lost. Reconnecting...");
-        init_mqtt(); // Reconnect
+        if (!init_mqtt())
+        {
+            ESP_LOGE(MQTT_TAG, "Reconnection to MQTT broker failed.");
+        }
     }
     mqttClient.loop(); // Process MQTT messages
 }

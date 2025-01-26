@@ -15,7 +15,7 @@ bool esp_setup()
 {
     button.begin();
 
-    // Sprawdzanie, czy dane WiFi już istnieją
+    // Sprawdzanie, czy dane WiFi i MQTT już istnieją
     Preferences preferences;
     preferences.begin("wifi", true);                              // Tryb odczytu
     bool isConfigured = preferences.getBool("configured", false); // Flaga konfiguracji
@@ -23,36 +23,46 @@ bool esp_setup()
 
     if (!isConfigured)
     {
-        // Pierwsze uruchomienie – brak danych, uruchom tryb AP
+        // Brak danych WiFi/MQTT - uruchom tryb Access Point i czekaj na konfigurację
         ESP_LOGI(SCHEDULING_TAG, "Device not configured. Starting in Access Point mode...");
-        accessPoint.run(); // Czeka na zapisanie danych WiFi
+        accessPoint.run(); // Oczekiwanie na wprowadzenie danych
     }
 
-    while (true)
+    // Próba połączenia z WiFi
+    ESP_LOGI(SCHEDULING_TAG, "Attempting to connect to WiFi...");
+    if (!init_wifi())
     {
-        // Próba połączenia z WiFi
-        ESP_LOGI(SCHEDULING_TAG, "Attempting to connect to WiFi...");
-        if (init_wifi())
-        {
-            ESP_LOGI(SCHEDULING_TAG, "Connected to WiFi successfully!");
+        ESP_LOGW(SCHEDULING_TAG, "Failed to connect to WiFi. WiFi will remain disconnected.");
+    }
+    else
+    {
+        ESP_LOGI(SCHEDULING_TAG, "Connected to WiFi successfully.");
+    }
 
-            // Inicjalizacja pozostałych modułów
-            if (initialize_remaining_modules())
-            {
-                ESP_LOGI(SCHEDULING_TAG, "All modules initialized successfully!");
-                break; // Program gotowy do działania
-            }
-            else
-            {
-                ESP_LOGE(SCHEDULING_TAG, "Failed to initialize some modules. Restarting Access Point...");
-                accessPoint.run(); // Uruchom ponownie AP do poprawienia danych
-            }
+    // Próba połączenia z MQTT, jeśli WiFi jest połączone
+    if (WiFi.status() == WL_CONNECTED)
+    {
+        ESP_LOGI(SCHEDULING_TAG, "Attempting to connect to MQTT...");
+        if (!init_mqtt())
+        {
+            ESP_LOGW(SCHEDULING_TAG, "Failed to connect to MQTT. Waiting for manual reconfiguration.");
         }
         else
         {
-            ESP_LOGW(SCHEDULING_TAG, "Failed to connect to WiFi. Restarting Access Point...");
-            accessPoint.run(); // Uruchom ponownie AP do poprawienia danych
+            ESP_LOGI(SCHEDULING_TAG, "Connected to MQTT successfully.");
         }
+    }
+
+    // Inicjalizacja pozostałych modułów, jeśli WiFi i MQTT są połączone
+    if (WiFi.status() == WL_CONNECTED && mqtt_connected)
+    {
+        ESP_LOGI(SCHEDULING_TAG, "WiFi and MQTT connected. Initializing remaining modules...");
+        if (!initialize_remaining_modules())
+        {
+            ESP_LOGE(SCHEDULING_TAG, "Failed to initialize some modules. System halted.");
+            return false;
+        }
+        ESP_LOGI(SCHEDULING_TAG, "All modules initialized successfully!");
     }
 
     return true;
@@ -125,7 +135,7 @@ void buttonTask(void *pvParameters)
         if (button.isLongPressed())
         {
             ESP_LOGI(SCHEDULING_TAG, "Button long press detected. Triggering AP mode...");
-            accessPoint.run();
+            accessPoint.run(); // Ręczne uruchamianie trybu AP
         }
         vTaskDelay(BUTTON_READ_FREQ / portTICK_PERIOD_MS);
     }
@@ -182,20 +192,20 @@ bool init_scheduling()
         return false;
     }
 
-    // result = xTaskCreatePinnedToCore(
-    //     mqttTask,
-    //     "MQTT Task",
-    //     MQTT_TASK_STACK_SIZE,
-    //     NULL,
-    //     MQTT_TASK_PRIORITY,
-    //     &mqttTaskHandle,
-    //     MQTT_CORE);
+    result = xTaskCreatePinnedToCore(
+        mqttTask,
+        "MQTT Task",
+        MQTT_TASK_STACK_SIZE,
+        NULL,
+        MQTT_TASK_PRIORITY,
+        &mqttTaskHandle,
+        MQTT_CORE);
 
-    // if (result != pdPASS)
-    // {
-    //     ESP_LOGE(SCHEDULING_TAG, "Failed to create MQTT Task");
-    //     return false;
-    // }
+    if (result != pdPASS)
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Failed to create MQTT Task");
+        return false;
+    }
 
     result = xTaskCreatePinnedToCore(
         buttonTask,

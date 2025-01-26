@@ -16,12 +16,33 @@ struct mqtt_topics
 };
 
 /**
- * @brief Global variable indicating if the alarm is armed or not.
+ * @brief Structure to hold MQTT configuration.
+ *
+ * This structure contains the broker address, port, and client ID.
  */
-extern bool alarm_armed; // Global variable
+struct MqttConfig
+{
+    String broker;
+    int port;
+    String clientId;
+};
+
+/**
+ * @brief Indicates whether the MQTT client is currently connected.
+ */
+extern bool mqtt_connected;
+
+/**
+ * @brief Reads MQTT configuration from Preferences.
+ *
+ * @return MqttConfig structure containing the broker, port, and client ID.
+ */
+MqttConfig read_mqtt_config();
 
 /**
  * @brief Initializes the MQTT client and connects to the broker.
+ *
+ * Reads configuration from Preferences and connects to the MQTT broker.
  *
  * @return true if initialization was successful, false otherwise.
  */
