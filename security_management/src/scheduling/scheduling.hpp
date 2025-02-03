@@ -37,6 +37,7 @@
 
 /* Event frequencies in ms */
 #define WIFI_RECONNECT_FREQ 1000
+#define MQTT_READ_FREQ 100
 #define PIR_READ_FREQ 100
 #define BUZZER_READ_FREQ 100
 #define FIRE_SENSOR_READ_FREQ 100
@@ -65,54 +66,54 @@ bool init_scheduling();
 
 /**
  * @brief Task that handles WiFi connection.
- * 
+ *
  * This task is responsible for handling the WiFi connection.
- * 
+ *
  * @param pvParameters Task parameters
  */
 void wifiTask(void *pvParameters);
 
 /**
  * @brief Task that handles MQTT connection.
- * 
+ *
  * This task is responsible for handling the MQTT connection.
- * 
+ *
  * @param pvParameters Task parameters
  */
 void mqttTask(void *pvParameters);
 
 /**
  * @brief Task that handles PIR sensor.
- * 
+ *
  * This task is responsible for handling the PIR sensor.
- * 
+ *
  * @param pvParameters Task parameters
  */
 void pirTask(void *pvParameters);
 
 /**
  * @brief Task that handles buzzer.
- * 
+ *
  * This task is responsible for handling the buzzer.
- * 
+ *
  * @param pvParameters Task parameters
  */
 void buzzerTask(void *pvParameters);
 
 /**
  * @brief Task that handles fire sensor.
- * 
+ *
  * This task is responsible for handling the fire sensor.
- * 
+ *
  * @param pvParameters Task parameters
  */
 void fireSensorTask(void *pvParameters);
 
 /**
  * @brief Task that handles smoke detector.
- * 
+ *
  * This task is responsible for handling the smoke detector.
- * 
+ *
  * @param pvParameters Task parameters
  */
 void smokeDetectorTask(void *pvParameters);
