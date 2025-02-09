@@ -12,7 +12,7 @@
 void setup()
 {
   Serial.begin(115200);
-  while (!Serial)
+  while (!Serial) 
     ;
 
   if (!security_setup())
@@ -20,6 +20,8 @@ void setup()
     ESP_LOGE(MAIN_TAG, "Security setup failed");
     return;
   }
+
+  // init_scheduling();
 }
 
 /**

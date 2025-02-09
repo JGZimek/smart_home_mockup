@@ -31,17 +31,17 @@ bool security_setup()
     //     return false;
     // }
 
-    // if (!init_buzzer())
-    // {
-    //     ESP_LOGE(SCHEDULING_TAG, "Failed to initialize Buzzer");
-    //     return false;
-    // }
+    if (!init_buzzer())
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Failed to initialize Buzzer");
+        return false;
+    }
 
-    // if (!init_fire_sensor())
-    // {
-    //     ESP_LOGE(SCHEDULING_TAG, "Failed to initialize Fire Sensor");
-    //     return false;
-    // }
+    if (!init_fire_sensor())
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Failed to initialize Fire Sensor");
+        return false;
+    }
 
     // if (!init_smoke_detector())
     // {
@@ -49,11 +49,11 @@ bool security_setup()
     //     return false;
     // }
 
-    // if (!init_scheduling())
-    // {
-    //     ESP_LOGE(SCHEDULING_TAG, "Failed to initialize scheduling");
-    //     return false;
-    // }
+    if (!init_scheduling())
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Failed to initialize scheduling");
+        return false;
+    }
     return true;
 }
 
@@ -189,7 +189,7 @@ void buzzerTask(void *pvParameters)
 {
     while (1)
     {
-        // handle_buzzer();
+        handle_buzzer();
         vTaskDelay(BUZZER_READ_FREQ / portTICK_PERIOD_MS);
     }
 }
@@ -198,7 +198,7 @@ void fireSensorTask(void *pvParameters)
 {
     while (1)
     {
-        // handle_fire_sensor();
+        handle_fire_sensor();
         vTaskDelay(FIRE_SENSOR_READ_FREQ / portTICK_PERIOD_MS);
     }
 }
