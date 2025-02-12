@@ -55,3 +55,10 @@ void buzzer_beep_sequence(int duration_ms, int count);
  * @param alarm_on Boolean to indicate if the alarm should be activated.
  */
 void set_buzzer_alarm(bool alarm_on);
+
+/**
+ * @brief Sets alarm status 
+ *
+ * @param alarm_on Boolean to indicate if the alarm should be activated or deactivated.
+ */
+void set_alarm_active(bool active);

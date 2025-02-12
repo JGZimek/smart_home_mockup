@@ -1,13 +1,13 @@
 #include "buzzer.hpp"
 #include "esp_log.h"
 
-#define BUZZER_PIN 4 // GPIO pin where the buzzer is connected
+#define BUZZER_PIN 15 // GPIO pin where the buzzer is connected
 #define BUZZER_TAG "app_buzzer"
 
 static bool alarm_active = false; // Zmienna, która przechowuje stan alarmu
 
 // Variables to manage beep sequences
-static int beep_duration_ms = 0;
+static int beep_duration_ms = 500;
 static int beep_count = 0;
 static unsigned long last_beep_time = 0;
 static bool is_beeping = false;
@@ -19,7 +19,7 @@ bool init_buzzer()
     ESP_LOGI(BUZZER_TAG, "Buzzer initialized on GPIO %d", BUZZER_PIN);
     return true;
 }
-
+    
 void handle_buzzer()
 {
     unsigned long current_time = millis();
@@ -53,6 +53,10 @@ void handle_buzzer()
     }
 }
 
+void set_alarm_active(bool active){
+    alarm_active = active;
+}
+
 void buzzer_short_beep(int duration_ms)
 {
     digitalWrite(BUZZER_PIN, HIGH); // Turn the buzzer on
@@ -76,15 +80,20 @@ void buzzer_beep_sequence(int duration_ms, int count)
     digitalWrite(BUZZER_PIN, HIGH); // Start the first beep
 }
 
+/*
+    CURRENTLY ONLY THIS FUNCTION IS USED TO ACTIVATE THE ALARM
+*/
 void set_buzzer_alarm(bool alarm_on)
 {
     alarm_active = alarm_on; // Set the alarm state based on MQTT message
     if (alarm_on)
     {
+        digitalWrite(BUZZER_PIN, HIGH); // Turn on the buzzer
         ESP_LOGI(BUZZER_TAG, "Alarm activated");
     }
     else
     {
+        digitalWrite(BUZZER_PIN, LOW); // Turn off the buzzer
         ESP_LOGI(BUZZER_TAG, "Alarm deactivated");
     }
 }
