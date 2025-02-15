@@ -14,6 +14,12 @@ bool esp_setup()
         return false;
     }
 
+    if (!init_led_control())
+    {
+        ESP_LOGE(SCHEDULING_TAG, "LED control initialization failed.");
+        return false;
+    }
+
     if (!init_scheduling())
     {
         ESP_LOGE(SCHEDULING_TAG, "Scheduling initialization failed.");
@@ -44,6 +50,21 @@ bool init_scheduling()
         return false;
     }
 
+    result = xTaskCreatePinnedToCore(
+        ledcontrolTask,
+        "led_control",
+        LED_CONTROL_STACK_SIZE,
+        NULL,
+        LED_CONTROL_PRIORITY,
+        NULL,
+        LED_CONTROL_CORE);
+
+    if (result != pdPASS)
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Failed to create led_control task.");
+        return false;
+    }
+
     return true;
 }
 
@@ -53,5 +74,14 @@ void energymonitorTask(void *pvParameters)
     {
         handle_energy_monitor();
         vTaskDelay(ENERGY_MONITOR_FREQUENCY / portTICK_PERIOD_MS);
+    }
+}
+
+void ledcontrolTask(void *pvParameters)
+{
+    while (true)
+    {
+        handle_led_control();
+        vTaskDelay(LED_CONTROL_FREQUENCY / portTICK_PERIOD_MS);
     }
 }

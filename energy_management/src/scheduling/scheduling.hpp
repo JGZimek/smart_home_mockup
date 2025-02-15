@@ -5,18 +5,23 @@
 #include "freertos/task.h"
 
 #include "energy_monitor/energy_monitor.hpp"
+#include "led_control/led_control.hpp"
 
 /* Task priorities */
 #define ENERGY_MONITOR_PRIORITY 1
+#define LED_CONTROL_PRIORITY 2
 
 /* Core assignments */
 #define ENERGY_MONITOR_CORE 0
+#define LED_CONTROL_CORE 1
 
 /* Task stack size */
 #define ENERGY_MONITOR_STACK_SIZE 4096
+#define LED_CONTROL_STACK_SIZE 4096
 
 /* Event frequencies in ms */
 #define ENERGY_MONITOR_FREQUENCY 1000
+#define LED_CONTROL_FREQUENCY 100
 
 /**
  * @brief Sets up the ESP32 system, initializes components, and starts scheduling.
@@ -45,3 +50,12 @@ bool init_scheduling();
  * @param pvParameters Task parameters.
  */
 void energymonitorTask(void *pvParameters);
+
+/**
+ * @brief Task that handles the LED control.
+ *
+ * This task is responsible for handling the LED control.
+ *
+ * @param pvParameters Task parameters.
+ */
+void ledcontrolTask(void *pvParameters);
