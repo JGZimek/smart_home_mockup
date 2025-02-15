@@ -1,18 +1,20 @@
 #include <Arduino.h>
 
 // put function declarations here:
-int myFunction(int, int);
+void myFunction();
 
 void setup() {
   // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+  Serial.begin(115200);  // Inicjalizacja komunikacji szeregowej
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
+  myFunction();
+  delay(1000);  // Opóźnienie 1 sekundy
 }
 
 // put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+void myFunction() {
+  Serial.println("Hello world");
 }
