@@ -12,3 +12,7 @@ bool init_energy_monitor();
  * @brief Handles the energy monitor.
  */
 void handle_energy_monitor();
+
+float energy_consumption_monitor();
+
+float energy_production_monitor();
