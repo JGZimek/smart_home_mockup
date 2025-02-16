@@ -1,48 +1,47 @@
 #pragma once
 
-#include "Arduino.h"
+#include <Arduino.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-/**
- * @brief Initialize the hardware and software environment.
- *
- * This function initializes the hardware and software environment
- * for the application. This includes setting up the FreeRTOS tasks
- * and any other necessary components.
- *
- * @return true if the environment setup was successful, false otherwise.
- */
-bool environment_setup();
+#include "../network/wifi/wifi.hpp"
+#include "../network/access_point/access_point.hpp"
 
-/**
- * @brief Initialize the FreeRTOS scheduler.
+/* Task priorities */
+#define WIFI_TASK_PRIORITY 1
+
+/* Core assignments */
+#define WIFI_TASK_CORE 0
+
+/* Task stack size */
+#define WIFI_TASK_STACK_SIZE 4096
+
+/* Event frequencies in ms */
+#define WIFI_EVENT_FREQUENCY 1000
+
+/*
+ * @brief Setup function for the ESP32.
  *
- * This function initializes the FreeRTOS scheduler and creates
- * the necessary tasks for the application.
+ * This function initializes the ESP32 hardware and software components.
  *
- * @return true if the scheduling setup was successful, false otherwise.
+ * @return true if setup was successful, false otherwise
+ */
+bool esp_setup();
+
+/*
+ * @brief Initialize the scheduling tasks.
+ *
+ * This function creates the FreeRTOS tasks for the scheduling module.
+ *
+ * @return true if initialization was successful, false otherwise
  */
 bool init_scheduling();
 
-/**
- * @brief Task to handle the WiFi connection.
+/*
+ * @brief Task function for handling WiFi events.
  *
- * This task is responsible for connecting to the WiFi network
- * and maintaining the connection. It will periodically check
- * the connection status and attempt to reconnect if necessary.
+ * This function is responsible for handling WiFi events in the background.
  *
- * @param pvParameters optional parameters to pass to the task.
+ * @param pvParameters pointer to task-specific data structure
  */
 void wifiTask(void *pvParameters);
-
-/**
- * @brief Task to handle the MQTT connection.
- *
- * This task is responsible for connecting to the MQTT broker
- * and maintaining the connection. It will periodically check
- * the connection status and attempt to reconnect if necessary.
- *
- * @param pvParameters optional parameters to pass to the task.
- */
-void mqttTask(void *pvParameters);
