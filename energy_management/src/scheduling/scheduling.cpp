@@ -3,6 +3,9 @@
 #define SCHEDULING_TAG "app_scheduling"
 
 TaskHandle_t energy_monitor_task;
+TaskHandle_t led_control_task;
+TaskHandle_t light_intensity_task;
+TaskHandle_t panel_control_task;
 
 bool esp_setup()
 {
@@ -62,7 +65,7 @@ bool init_scheduling()
         LED_CONTROL_STACK_SIZE,
         NULL,
         LED_CONTROL_PRIORITY,
-        NULL,
+        &led_control_task,
         LED_CONTROL_CORE);
 
     if (result != pdPASS)
@@ -77,12 +80,27 @@ bool init_scheduling()
         LIGHT_INTENSITY_STACK_SIZE,
         NULL,
         LIGHT_INTENSITY_PRIORITY,
-        NULL,
+        &light_intensity_task,
         LIGHT_INTENSITY_CORE);
 
     if (result != pdPASS)
     {
         ESP_LOGE(SCHEDULING_TAG, "Failed to create light_intensity task.");
+        return false;
+    }
+
+    result = xTaskCreatePinnedToCore(
+        panelcontrolTask,
+        "panel_control",
+        PANEL_CONTROL_STACK_SIZE,
+        NULL,
+        PANEL_CONTROL_PRIORITY,
+        &panel_control_task,
+        PANEL_CONTROL_CORE);
+
+    if (result != pdPASS)
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Failed to create panel_control task.");
         return false;
     }
 
@@ -113,5 +131,14 @@ void lightintensityTask(void *pvParameters)
     {
         handle_light_intensity();
         vTaskDelay(LIGHT_INTENSITY_FREQUENCY / portTICK_PERIOD_MS);
+    }
+}
+
+void panelcontrolTask(void *pvParameters)
+{
+    while (true)
+    {
+        handle_panel_control();
+        vTaskDelay(PANEL_CONTROL_FREQUENCY / portTICK_PERIOD_MS);
     }
 }
