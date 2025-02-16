@@ -17,12 +17,12 @@
  */
 bool init_energy_monitor();
 
-// /**
-//  * @brief Reads energy production data.
-//  *
-//  * Reads power data from the INA219 sensor monitoring production.
-//  */
-// void read_energy_production();
+/**
+ * @brief Reads energy production data.
+ *
+ * Reads power data from the INA219 sensor monitoring production.
+ */
+void read_energy_production();
 
 /**
  * @brief Reads energy consumption data.
