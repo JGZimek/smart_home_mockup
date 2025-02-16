@@ -15,9 +15,9 @@ void setup()
   while (!Serial)
     ;
 
-  if (!environment_setup())
+  if (!esp_setup())
   {
-    ESP_LOGE(MAIN_TAG, "Environment setup failed. Halting.");
+    ESP_LOGE(MAIN_TAG, "ESP32 setup failed. Halting.");
   }
 }
 
