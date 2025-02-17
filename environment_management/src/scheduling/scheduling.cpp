@@ -5,6 +5,8 @@
 
 TaskHandle_t wifi_task;
 TaskHandle_t mqtt_task;
+TaskHandle_t fan_control_task;
+TaskHandle_t env_measurement_task;
 
 WiFiManager wifiManager;
 MqttManager mqttManager;
@@ -13,26 +15,38 @@ bool esp_setup()
 {
     ESP_LOGI(SCHEDULING_TAG, "Setting up ESP32 system...");
 
-    // Check if both WiFi and MQTT credentials are configured.
-    if (!(wifiManager.isConfigured() && mqttManager.isConfigured()))
-    {
-        ESP_LOGI(SCHEDULING_TAG, "WiFi and/or MQTT credentials not configured. Starting Access Point mode...");
-        // Launch AP mode (this call blocks until valid settings are entered)
-        AccessPoint ap("ESP32_Config", "config123");
-        ap.run();
-    }
+    // // Check if both WiFi and MQTT credentials are configured.
+    // if (!(wifiManager.isConfigured() && mqttManager.isConfigured()))
+    // {
+    //     ESP_LOGI(SCHEDULING_TAG, "WiFi and/or MQTT credentials not configured. Starting Access Point mode...");
+    //     // Launch AP mode (this call blocks until valid settings are entered)
+    //     AccessPoint ap("ESP32_Config", "config123");
+    //     ap.run();
+    // }
 
-    // Attempt to initialize WiFi
-    if (!wifiManager.begin())
+    // // Attempt to initialize WiFi
+    // if (!wifiManager.begin())
+    // {
+    //     ESP_LOGE(SCHEDULING_TAG, "WiFiManager setup failed.");
+    //     return false;
+    // }
+
+    // // Attempt to initialize MQTT connection (which loads its configuration from Preferences)
+    // if (!mqttManager.begin())
+    // {
+    //     ESP_LOGE(SCHEDULING_TAG, "MQTT Manager setup failed.");
+    //     return false;
+    // }
+
+    if (!init_fan_control())
     {
-        ESP_LOGE(SCHEDULING_TAG, "WiFiManager setup failed.");
+        ESP_LOGE(SCHEDULING_TAG, "Fan control initialization failed.");
         return false;
     }
 
-    // Attempt to initialize MQTT connection (which loads its configuration from Preferences)
-    if (!mqttManager.begin())
+    if (!init_env_measurement())
     {
-        ESP_LOGE(SCHEDULING_TAG, "MQTT Manager setup failed.");
+        ESP_LOGE(SCHEDULING_TAG, "Environmental measurement initialization failed.");
         return false;
     }
 
@@ -45,31 +59,61 @@ bool init_scheduling()
 
     BaseType_t result;
 
+    // result = xTaskCreatePinnedToCore(
+    //     wifiTask,
+    //     "wifi_task",
+    //     WIFI_TASK_STACK_SIZE,
+    //     NULL,
+    //     WIFI_TASK_PRIORITY,
+    //     &wifi_task,
+    //     WIFI_TASK_CORE);
+    // if (result != pdPASS)
+    // {
+    //     ESP_LOGE(SCHEDULING_TAG, "Failed to create wifi task.");
+    //     return false;
+    // }
+
+    // result = xTaskCreatePinnedToCore(
+    //     mqttTask,
+    //     "mqtt_task",
+    //     MQTT_TASK_STACK_SIZE,
+    //     NULL,
+    //     MQTT_TASK_PRIORITY,
+    //     &mqtt_task,
+    //     MQTT_TASK_CORE);
+    // if (result != pdPASS)
+    // {
+    //     ESP_LOGE(SCHEDULING_TAG, "Failed to create mqtt task.");
+    //     return false;
+    // }
+
     result = xTaskCreatePinnedToCore(
-        wifiTask,
-        "wifi_task",
-        WIFI_TASK_STACK_SIZE,
+        fanControlTask,
+        "fan_control_task",
+        FAN_CONTROL_TASK_STACK_SIZE,
         NULL,
-        WIFI_TASK_PRIORITY,
-        &wifi_task,
-        WIFI_TASK_CORE);
+        FAN_CONTROL_TASK_PRIORITY,
+        &fan_control_task,
+        FAN_CONTROL_TASK_CORE);
+
     if (result != pdPASS)
     {
-        ESP_LOGE(SCHEDULING_TAG, "Failed to create wifi task.");
+        ESP_LOGE(SCHEDULING_TAG, "Failed to create fan control task.");
         return false;
     }
 
     result = xTaskCreatePinnedToCore(
-        mqttTask,
-        "mqtt_task",
-        MQTT_TASK_STACK_SIZE,
+        envMeasurementTask,
+        "env_measurement_task",
+        ENV_MEASUREMENT_TASK_STACK_SIZE,
         NULL,
-        MQTT_TASK_PRIORITY,
-        &mqtt_task,
-        MQTT_TASK_CORE);
+        ENV_MEASUREMENT_TASK_PRIORITY,
+        &env_measurement_task,
+        ENV_MEASUREMENT_TASK_CORE);
+
     if (result != pdPASS)
     {
-        ESP_LOGE(SCHEDULING_TAG, "Failed to create mqtt task.");
+        ESP_LOGE(SCHEDULING_TAG, "Failed to create environmental measurement task.");
         return false;
     }
 
@@ -91,5 +135,23 @@ void mqttTask(void *pvParameters)
     {
         mqttManager.handle();
         vTaskDelay(MQTT_EVENT_FREQUENCY / portTICK_PERIOD_MS);
+    }
+}
+
+void fanControlTask(void *pvParameters)
+{
+    while (true)
+    {
+        handle_fan_control();
+        vTaskDelay(FAN_CONTROL_EVENT_FREQUENCY / portTICK_PERIOD_MS);
+    }
+}
+
+void envMeasurementTask(void *pvParameters)
+{
+    while (true)
+    {
+        handle_env_measurement();
+        vTaskDelay(ENV_MEASUREMENT_EVENT_FREQUENCY / portTICK_PERIOD_MS);
     }
 }

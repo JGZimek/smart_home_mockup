@@ -7,22 +7,32 @@
 #include "../network/wifi/wifi.hpp"
 #include "../network/mqtt/mqtt.hpp"
 #include "../network/access_point/access_point.hpp"
+#include "../fan_control/fan_control.hpp"
+#include "../env_measurement/env_measurement.hpp"
 
 /* Task priorities */
 #define WIFI_TASK_PRIORITY 1
 #define MQTT_TASK_PRIORITY 1
+#define FAN_CONTROL_TASK_PRIORITY 2
+#define ENV_MEASUREMENT_TASK_PRIORITY 1
 
 /* Core assignments */
 #define WIFI_TASK_CORE 0
 #define MQTT_TASK_CORE 1
+#define FAN_CONTROL_TASK_CORE 0
+#define ENV_MEASUREMENT_TASK_CORE 1
 
 /* Task stack size */
 #define WIFI_TASK_STACK_SIZE 4096
 #define MQTT_TASK_STACK_SIZE 4096
+#define FAN_CONTROL_TASK_STACK_SIZE 4096
+#define ENV_MEASUREMENT_TASK_STACK_SIZE 4096
 
 /* Event frequencies in ms */
 #define WIFI_EVENT_FREQUENCY 1000
 #define MQTT_EVENT_FREQUENCY 1000
+#define FAN_CONTROL_EVENT_FREQUENCY 1000
+#define ENV_MEASUREMENT_EVENT_FREQUENCY 1000
 
 /*
  * @brief Setup function for the ESP32.
@@ -59,3 +69,21 @@ void wifiTask(void *pvParameters);
  * @param pvParameters pointer to task-specific data structure
  */
 void mqttTask(void *pvParameters);
+
+/*
+ * @brief Task function for handling fan control events.
+ *
+ * This function is responsible for handling fan control events in the background.
+ *
+ * @param pvParameters pointer to task-specific data structure
+ */
+void fanControlTask(void *pvParameters);
+
+/*
+ * @brief Task function for handling environmental measurement events.
+ *
+ * This function is responsible for handling environmental measurement events in the background.
+ *
+ * @param pvParameters pointer to task-specific data structure
+ */
+void envMeasurementTask(void *pvParameters);
