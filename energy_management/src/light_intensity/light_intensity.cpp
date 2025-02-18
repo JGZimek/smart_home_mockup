@@ -1,114 +1,94 @@
 #include "light_intensity.hpp"
 #include "esp_log.h"
-#include "freertos/semphr.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 
-static const char *TAG = "LIGHT_INTENSITY";
+#define LIGHT_INTENSITY_TAG "app_light_intensity"
 
-// Obiekt czujnika z identyfikatorem diagnostycznym
+// Globalny obiekt czujnika – identyfikator diagnostyczny 2591
 Adafruit_TSL2591 tsl = Adafruit_TSL2591(2591);
 
-// Zmienna przechowująca ostatni odczyt natężenia światła
+// Globalny mutex do ochrony dostępu do sensora (I2C)
+SemaphoreHandle_t tslMutex = NULL;
+
+// Globalna zmienna przechowująca ostatni odczyt natężenia światła (w luxach)
 static float light_intensity = 0.0;
-
-// Mutex chroniący operacje na magistrali I2C
-static SemaphoreHandle_t i2c_mutex = NULL;
-
-// Pomocnicza funkcja konfigurująca sensor (ustawienie zysku i czasu integracji)
-static void configureSensor(void)
-{
-  // Uzyskaj dostęp do magistrali I2C
-  xSemaphoreTake(i2c_mutex, portMAX_DELAY);
-
-  // Ustawiamy zysk na 25x (Medium)
-  tsl.setGain(TSL2591_GAIN_MED);
-  // Ustawiamy czas integracji na 300ms
-  tsl.setTiming(TSL2591_INTEGRATIONTIME_300MS);
-
-  // Logowanie konfiguracji
-  ESP_LOGI(TAG, "------------------------------------");
-
-  tsl2591Gain_t gain = tsl.getGain();
-  switch (gain)
-  {
-  case TSL2591_GAIN_LOW:
-    ESP_LOGI(TAG, "Gain: 1x (Low)");
-    break;
-  case TSL2591_GAIN_MED:
-    ESP_LOGI(TAG, "Gain: 25x (Medium)");
-    break;
-  case TSL2591_GAIN_HIGH:
-    ESP_LOGI(TAG, "Gain: 428x (High)");
-    break;
-  case TSL2591_GAIN_MAX:
-    ESP_LOGI(TAG, "Gain: 9876x (Max)");
-    break;
-  default:
-    ESP_LOGI(TAG, "Gain: Nieznany");
-    break;
-  }
-
-  ESP_LOGI(TAG, "Timing: %d ms", ((tsl.getTiming() + 1) * 100));
-  ESP_LOGI(TAG, "------------------------------------");
-
-  xSemaphoreGive(i2c_mutex);
-}
 
 bool init_light_intensity()
 {
   // Inicjalizacja magistrali I2C
   Wire.begin();
 
-  // Utwórz mutex, jeśli jeszcze nie został utworzony
-  if (i2c_mutex == NULL)
+  // Utworzenie mutexu, jeśli jeszcze nie został utworzony
+  if (tslMutex == NULL)
   {
-    i2c_mutex = xSemaphoreCreateMutex();
-    if (i2c_mutex == NULL)
+    tslMutex = xSemaphoreCreateMutex();
+    if (tslMutex == NULL)
     {
-      ESP_LOGE(TAG, "Nie udało się utworzyć mutexa dla I2C");
+      ESP_LOGE(LIGHT_INTENSITY_TAG, "Nie udało się utworzyć mutexa dla TSL2591");
       return false;
     }
   }
 
-  // Inicjalizacja czujnika – zabezpieczona mutexem
-  xSemaphoreTake(i2c_mutex, portMAX_DELAY);
-  bool sensorInitialized = tsl.begin();
-  xSemaphoreGive(i2c_mutex);
-
-  if (!sensorInitialized)
+  // Inicjalizacja czujnika – dostęp do sensora zabezpieczamy mutexem
+  if (!tsl.begin())
   {
-    ESP_LOGE(TAG, "Nie udało się zainicjalizować czujnika TSL2591!");
+    ESP_LOGE(LIGHT_INTENSITY_TAG, "Nie udało się zainicjalizować czujnika TSL2591!");
     return false;
   }
+  else
+  {
+    ESP_LOGI(LIGHT_INTENSITY_TAG, "TSL2591 zainicjalizowany pomyślnie.");
+  }
 
-  // Konfiguracja sensora
-  configureSensor();
+  // Konfiguracja czujnika – ustawiamy zysk i czas integracji
+  if (xSemaphoreTake(tslMutex, portMAX_DELAY) == pdTRUE)
+  {
+    tsl.setGain(TSL2591_GAIN_MED);                // 25x (Medium)
+    tsl.setTiming(TSL2591_INTEGRATIONTIME_300MS); // 300ms
+    xSemaphoreGive(tslMutex);
+    ESP_LOGI(LIGHT_INTENSITY_TAG, "Konfiguracja TSL2591: Gain=25x, Timing=300ms.");
+  }
+  else
+  {
+    ESP_LOGE(LIGHT_INTENSITY_TAG, "Nie udało się uzyskać mutexa przy konfiguracji TSL2591.");
+  }
 
-  // Odczekaj, aby sensor mógł się ustabilizować
+  // Odczekaj chwilę, aby sensor się ustabilizował
   vTaskDelay(pdMS_TO_TICKS(350));
 
-  ESP_LOGI(TAG, "Czujnik TSL2591 zainicjalizowany pomyślnie");
+  ESP_LOGI(LIGHT_INTENSITY_TAG, "Inicjalizacja TSL2591 zakończona pomyślnie.");
   return true;
 }
 
 void handle_light_intensity()
 {
-  uint32_t lum = 0;
+  uint16_t broadband = 0, infrared = 0, visible = 0;
 
-  // Odczyt 32-bitowej wartości z sensora (zabezpieczony mutexem)
-  xSemaphoreTake(i2c_mutex, portMAX_DELAY);
-  lum = tsl.getFullLuminosity();
-  xSemaphoreGive(i2c_mutex);
+  // Odczyt wartości z sensora zabezpieczony mutexem
+  if (xSemaphoreTake(tslMutex, portMAX_DELAY) == pdTRUE)
+  {
+    broadband = tsl.getLuminosity(TSL2591_FULLSPECTRUM);
+    infrared = tsl.getLuminosity(TSL2591_INFRARED);
+    xSemaphoreGive(tslMutex);
+  }
+  else
+  {
+    ESP_LOGE(LIGHT_INTENSITY_TAG, "Nie udało się uzyskać mutexa przy odczycie TSL2591.");
+    return;
+  }
 
-  uint16_t ir = lum >> 16;
-  uint16_t full = lum & 0xFFFF;
+  // Oblicz wartość widzialną – jak w działającym przykładzie
+  visible = broadband - infrared;
 
-  // Obliczanie natężenia światła (lux) – operacja również zabezpieczona mutexem
-  xSemaphoreTake(i2c_mutex, portMAX_DELAY);
-  light_intensity = tsl.calculateLux(full, ir);
-  xSemaphoreGive(i2c_mutex);
+  // Opcjonalnie: oblicz wartość w luxach (można też wykorzystać 'visible')
+  if (xSemaphoreTake(tslMutex, portMAX_DELAY) == pdTRUE)
+  {
+    light_intensity = tsl.calculateLux(broadband, infrared);
+    xSemaphoreGive(tslMutex);
+  }
+  else
+  {
+    ESP_LOGE(LIGHT_INTENSITY_TAG, "Nie udało się uzyskać mutexa przy kalkulacji lux.");
+  }
 
-  // Logowanie wyniku
-  ESP_LOGI(TAG, "Natężenie światła: %f lux", light_intensity);
+  ESP_LOGI(LIGHT_INTENSITY_TAG, "Natężenie światła: Widzialne=%d, Lux=%f", visible, light_intensity);
 }
