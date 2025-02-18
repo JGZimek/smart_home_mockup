@@ -1,45 +1,70 @@
 #include "light_intensity.hpp"
 
-// Tworzymy obiekt czujnika – jawnie przekazujemy identyfikator (opcjonalnie)
-Adafruit_TSL2591 tsl2591 = Adafruit_TSL2591(2591);
+#define LIGHT_INTENSITY_TAG "app_light_intensity"
 
-// Zmienna do przechowywania ostatniego odczytu natężenia światła
+Adafruit_TSL2591 tsl = Adafruit_TSL2591(2591);
+
 static float light_intensity = 0.0;
+
+static void configureSensor()
+{
+  // Ustawiamy zysk na 25x (Medium)
+  tsl.setGain(TSL2591_GAIN_MED);
+  // Ustawiamy czas integracji na 300ms
+  tsl.setTiming(TSL2591_INTEGRATIONTIME_300MS);
+
+  // Dla celów diagnostycznych wypisujemy konfigurację
+  tsl2591Gain_t gain = tsl.getGain();
+  switch (gain)
+  {
+  case TSL2591_GAIN_LOW:
+    ESP_LOGI(LIGHT_INTENSITY_TAG, "Gain: 1x (Low)");
+    break;
+  case TSL2591_GAIN_MED:
+    ESP_LOGI(LIGHT_INTENSITY_TAG, "Gain: 25x (Medium)");
+    break;
+  case TSL2591_GAIN_HIGH:
+    ESP_LOGI(LIGHT_INTENSITY_TAG, "Gain: 428x (High)");
+    break;
+  case TSL2591_GAIN_MAX:
+    ESP_LOGI(LIGHT_INTENSITY_TAG, "Gain: 9876x (Max)");
+    break;
+  default:
+    ESP_LOGI(LIGHT_INTENSITY_TAG, "Gain: Nieznany");
+    break;
+  }
+
+  ESP_LOGI(LIGHT_INTENSITY_TAG, "Timing: %d ms", ((tsl.getTiming() + 1) * 100));
+}
 
 bool init_light_intensity()
 {
-  // Inicjalizujemy magistralę I2C (upewnij się, że nie jest już wcześniej inicjalizowana w innym miejscu)
   Wire.begin();
 
-  // Próba inicjalizacji czujnika
-  if (!tsl2591.begin())
+  if (!tsl.begin())
   {
-    Serial.println(F("Nie udało się zainicjalizować czujnika TSL2591!"));
+    ESP_LOGE(LIGHT_INTENSITY_TAG, "Nie udało się zainicjalizować czujnika TSL2591!");
     return false;
   }
 
-  // Ustawienia czujnika: czas integracji 100ms, niski zysk
-  tsl2591.setTiming(TSL2591_INTEGRATIONTIME_100MS);
-  tsl2591.setGain(TSL2591_GAIN_LOW);
+  configureSensor();
+  // Używamy opóźnienia, by sensor miał czas na stabilizację
+  vTaskDelay(pdMS_TO_TICKS(350));
 
-  // Dajemy sensorowi chwilę na ustabilizowanie się (trochę dłużej niż czas integracji)
-  delay(120);
-
-  Serial.println(F("Czujnik TSL2591 zainicjalizowany pomyślnie"));
+  ESP_LOGI(LIGHT_INTENSITY_TAG, "Czujnik TSL2591 zainicjalizowany pomyślnie");
   return true;
 }
 
 void handle_light_intensity()
 {
-  // Odczyt wartości z czujnika
-  uint16_t ch0 = tsl2591.getLuminosity(TSL2591_VISIBLE);  // Widoczna część widma
-  uint16_t ch1 = tsl2591.getLuminosity(TSL2591_INFRARED); // Część podczerwona
+  // Pobieramy 32-bitową wartość (górne 16 bitów to IR, dolne 16 bitów to pełny zakres)
+  uint32_t lum = tsl.getFullLuminosity();
+  uint16_t ir = lum >> 16;
+  uint16_t full = lum & 0xFFFF;
 
-  // Obliczanie natężenia światła w luksach
-  light_intensity = tsl2591.calculateLux(ch0, ch1);
+  // Obliczamy natężenie światła (lux)
+  light_intensity = tsl.calculateLux(full, ir);
 
-  // Wypisz wynik w Serial Monitorze
-  Serial.print(F("Natężenie światła: "));
-  Serial.print(light_intensity);
-  Serial.println(F(" lux"));
+  // Wypisujemy wynik przy użyciu ESP_LOG
+  ESP_LOGI(LIGHT_INTENSITY_TAG, "Natężenie światła: %f lux", light_intensity);
 }
