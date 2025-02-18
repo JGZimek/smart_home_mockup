@@ -23,12 +23,6 @@ bool esp_setup()
         return false;
     }
 
-    if (!init_light_intensity())
-    {
-        ESP_LOGE(SCHEDULING_TAG, "Light intensity initialization failed.");
-        return false;
-    }
-
     if (!init_scheduling())
     {
         ESP_LOGE(SCHEDULING_TAG, "Scheduling initialization failed.");
@@ -75,21 +69,6 @@ bool init_scheduling()
     }
 
     result = xTaskCreatePinnedToCore(
-        lightintensityTask,
-        "light_intensity",
-        LIGHT_INTENSITY_STACK_SIZE,
-        NULL,
-        LIGHT_INTENSITY_PRIORITY,
-        &light_intensity_task,
-        LIGHT_INTENSITY_CORE);
-
-    if (result != pdPASS)
-    {
-        ESP_LOGE(SCHEDULING_TAG, "Failed to create light_intensity task.");
-        return false;
-    }
-
-    result = xTaskCreatePinnedToCore(
         panelcontrolTask,
         "panel_control",
         PANEL_CONTROL_STACK_SIZE,
@@ -122,15 +101,6 @@ void ledcontrolTask(void *pvParameters)
     {
         handle_led_control();
         vTaskDelay(LED_CONTROL_FREQUENCY / portTICK_PERIOD_MS);
-    }
-}
-
-void lightintensityTask(void *pvParameters)
-{
-    while (true)
-    {
-        handle_light_intensity();
-        vTaskDelay(LIGHT_INTENSITY_FREQUENCY / portTICK_PERIOD_MS);
     }
 }
 
