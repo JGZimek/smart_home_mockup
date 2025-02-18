@@ -17,35 +17,35 @@ bool esp_setup()
 {
     ESP_LOGI(SCHEDULING_TAG, "Setting up ESP32 system...");
 
-    // Check if both WiFi and MQTT credentials are configured.
-    if (!(wifiManager.isConfigured() && mqttManager.isConfigured()))
-    {
-        ESP_LOGI(SCHEDULING_TAG, "WiFi and/or MQTT credentials not configured. Starting Access Point mode...");
-        // Launch AP mode (this call blocks until valid settings are entered)
-        AccessPoint ap("ESP32_Config", "config123");
-        ap.run();
-    }
+    // // Check if both WiFi and MQTT credentials are configured.
+    // if (!(wifiManager.isConfigured() && mqttManager.isConfigured()))
+    // {
+    //     ESP_LOGI(SCHEDULING_TAG, "WiFi and/or MQTT credentials not configured. Starting Access Point mode...");
+    //     // Launch AP mode (this call blocks until valid settings are entered)
+    //     AccessPoint ap("ESP32_Config", "config123");
+    //     ap.run();
+    // }
 
-    // Attempt to initialize the button
-    if (!button.begin())
-    {
-        ESP_LOGE(SCHEDULING_TAG, "Button initialization failed.");
-        return false;
-    }
+    // // Attempt to initialize the button
+    // if (!button.begin())
+    // {
+    //     ESP_LOGE(SCHEDULING_TAG, "Button initialization failed.");
+    //     return false;
+    // }
 
-    // Attempt to initialize WiFi
-    if (!wifiManager.begin())
-    {
-        ESP_LOGE(SCHEDULING_TAG, "WiFiManager setup failed.");
-        return false;
-    }
+    // // Attempt to initialize WiFi
+    // if (!wifiManager.begin())
+    // {
+    //     ESP_LOGE(SCHEDULING_TAG, "WiFiManager setup failed.");
+    //     return false;
+    // }
 
-    // Attempt to initialize MQTT connection (which loads its configuration from Preferences)
-    if (!mqttManager.begin())
-    {
-        ESP_LOGE(SCHEDULING_TAG, "MQTT Manager setup failed.");
-        // return false;
-    }
+    // // Attempt to initialize MQTT connection (which loads its configuration from Preferences)
+    // if (!mqttManager.begin())
+    // {
+    //     ESP_LOGE(SCHEDULING_TAG, "MQTT Manager setup failed.");
+    //     // return false;
+    // }
 
     if (!init_fan_control())
     {
@@ -74,48 +74,48 @@ bool init_scheduling()
 
     BaseType_t result;
 
-    result = xTaskCreatePinnedToCore(
-        wifiTask,
-        "wifi_task",
-        WIFI_TASK_STACK_SIZE,
-        NULL,
-        WIFI_TASK_PRIORITY,
-        &wifi_task,
-        WIFI_TASK_CORE);
-    if (result != pdPASS)
-    {
-        ESP_LOGE(SCHEDULING_TAG, "Failed to create wifi task.");
-        return false;
-    }
+    // result = xTaskCreatePinnedToCore(
+    //     wifiTask,
+    //     "wifi_task",
+    //     WIFI_TASK_STACK_SIZE,
+    //     NULL,
+    //     WIFI_TASK_PRIORITY,
+    //     &wifi_task,
+    //     WIFI_TASK_CORE);
+    // if (result != pdPASS)
+    // {
+    //     ESP_LOGE(SCHEDULING_TAG, "Failed to create wifi task.");
+    //     return false;
+    // }
 
-    result = xTaskCreatePinnedToCore(
-        mqttTask,
-        "mqtt_task",
-        MQTT_TASK_STACK_SIZE,
-        NULL,
-        MQTT_TASK_PRIORITY,
-        &mqtt_task,
-        MQTT_TASK_CORE);
-    if (result != pdPASS)
-    {
-        ESP_LOGE(SCHEDULING_TAG, "Failed to create mqtt task.");
-        return false;
-    }
+    // result = xTaskCreatePinnedToCore(
+    //     mqttTask,
+    //     "mqtt_task",
+    //     MQTT_TASK_STACK_SIZE,
+    //     NULL,
+    //     MQTT_TASK_PRIORITY,
+    //     &mqtt_task,
+    //     MQTT_TASK_CORE);
+    // if (result != pdPASS)
+    // {
+    //     ESP_LOGE(SCHEDULING_TAG, "Failed to create mqtt task.");
+    //     return false;
+    // }
 
-    result = xTaskCreatePinnedToCore(
-        buttonTask,
-        "button_task",
-        BUTTON_TASK_STACK_SIZE,
-        NULL,
-        BUTTON_TASK_PRIORITY,
-        &button_task,
-        BUTTON_TASK_CORE);
+    // result = xTaskCreatePinnedToCore(
+    //     buttonTask,
+    //     "button_task",
+    //     BUTTON_TASK_STACK_SIZE,
+    //     NULL,
+    //     BUTTON_TASK_PRIORITY,
+    //     &button_task,
+    //     BUTTON_TASK_CORE);
 
-    if (result != pdPASS)
-    {
-        ESP_LOGE(SCHEDULING_TAG, "Failed to create button task.");
-        return false;
-    }
+    // if (result != pdPASS)
+    // {
+    //     ESP_LOGE(SCHEDULING_TAG, "Failed to create button task.");
+    //     return false;
+    // }
 
     result = xTaskCreatePinnedToCore(
         fanControlTask,
