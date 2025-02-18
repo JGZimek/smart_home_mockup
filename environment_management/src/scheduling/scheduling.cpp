@@ -50,6 +50,12 @@ bool esp_setup()
         return false;
     }
 
+    if (!init_scheduling())
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Scheduling initialization failed.");
+        return false;
+    }
+
     return true;
 }
 
