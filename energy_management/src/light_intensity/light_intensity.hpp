@@ -2,12 +2,10 @@
 
 #include <Arduino.h>
 #include <Adafruit_TSL2591.h>
+#include <Wire.h>
 
-// Funkcja inicjalizująca czujnik
+// Inicjalizacja czujnika światła
 bool init_light_intensity();
 
-// Funkcja do obsługi odczytów z czujnika
+// Obsługa odczytów z czujnika światła
 void handle_light_intensity();
-
-// Funkcja do pobierania natężenia światła w luksach
-float get_light_intensity();

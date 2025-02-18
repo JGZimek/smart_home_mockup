@@ -1,42 +1,45 @@
 #include "light_intensity.hpp"
-#include <Wire.h>
 
-// Stwórz obiekt Adafruit_TSL2591
-Adafruit_TSL2591 tsl2591;
+// Tworzymy obiekt czujnika – jawnie przekazujemy identyfikator (opcjonalnie)
+Adafruit_TSL2591 tsl2591 = Adafruit_TSL2591(2591);
 
-// Zmienna do przechowywania ostatniego odczytanego poziomu światła
-float light_intensity = 0.0;
+// Zmienna do przechowywania ostatniego odczytu natężenia światła
+static float light_intensity = 0.0;
 
-// Funkcja do inicjalizacji czujnika TSL2591
-bool init_light_intensity() {
-  if (!tsl2591.begin()) {
-    Serial.println(F("Nie udało się zainicjować czujnika TSL2591!"));
+bool init_light_intensity()
+{
+  // Inicjalizujemy magistralę I2C (upewnij się, że nie jest już wcześniej inicjalizowana w innym miejscu)
+  Wire.begin();
+
+  // Próba inicjalizacji czujnika
+  if (!tsl2591.begin())
+  {
+    Serial.println(F("Nie udało się zainicjalizować czujnika TSL2591!"));
     return false;
   }
-  
+
   // Ustawienia czujnika: czas integracji 100ms, niski zysk
   tsl2591.setTiming(TSL2591_INTEGRATIONTIME_100MS);
   tsl2591.setGain(TSL2591_GAIN_LOW);
 
-  Serial.println(F("Czujnik TSL2591 zainicjowany pomyślnie"));
+  // Dajemy sensorowi chwilę na ustabilizowanie się (trochę dłużej niż czas integracji)
+  delay(120);
+
+  Serial.println(F("Czujnik TSL2591 zainicjalizowany pomyślnie"));
   return true;
 }
 
-// Funkcja do obsługi odczytu z czujnika
-void handle_light_intensity() {
+void handle_light_intensity()
+{
+  // Odczyt wartości z czujnika
   uint16_t ch0 = tsl2591.getLuminosity(TSL2591_VISIBLE);  // Widoczna część widma
   uint16_t ch1 = tsl2591.getLuminosity(TSL2591_INFRARED); // Część podczerwona
 
   // Obliczanie natężenia światła w luksach
   light_intensity = tsl2591.calculateLux(ch0, ch1);
 
-  // Wypisz wynik w serial monitorze
+  // Wypisz wynik w Serial Monitorze
   Serial.print(F("Natężenie światła: "));
   Serial.print(light_intensity);
   Serial.println(F(" lux"));
-}
-
-// Funkcja do pobierania ostatniego odczytu natężenia światła
-float get_light_intensity() {
-  return light_intensity;
 }
