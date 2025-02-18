@@ -6,6 +6,7 @@
 
 #include "../network/wifi/wifi.hpp"
 #include "../network/mqtt/mqtt.hpp"
+#include "../network/button/button.hpp"
 #include "../network/access_point/access_point.hpp"
 #include "../fan_control/fan_control.hpp"
 #include "../env_measurement/env_measurement.hpp"
@@ -13,28 +14,32 @@
 /* Task priorities */
 #define WIFI_TASK_PRIORITY 1
 #define MQTT_TASK_PRIORITY 1
+#define BUTTON_TASK_PRIORITY 2
 #define FAN_CONTROL_TASK_PRIORITY 2
 #define ENV_MEASUREMENT_TASK_PRIORITY 1
 
 /* Core assignments */
 #define WIFI_TASK_CORE 0
 #define MQTT_TASK_CORE 1
+#define BUTTON_TASK_CORE 0
 #define FAN_CONTROL_TASK_CORE 0
 #define ENV_MEASUREMENT_TASK_CORE 1
 
 /* Task stack size */
 #define WIFI_TASK_STACK_SIZE 4096
 #define MQTT_TASK_STACK_SIZE 4096
+#define BUTTON_TASK_STACK_SIZE 4096
 #define FAN_CONTROL_TASK_STACK_SIZE 4096
 #define ENV_MEASUREMENT_TASK_STACK_SIZE 4096
 
 /* Event frequencies in ms */
 #define WIFI_EVENT_FREQUENCY 1000
 #define MQTT_EVENT_FREQUENCY 1000
+#define BUTTON_EVENT_FREQUENCY 100
 #define FAN_CONTROL_EVENT_FREQUENCY 1000
 #define ENV_MEASUREMENT_EVENT_FREQUENCY 1000
 
-/*
+/**
  * @brief Setup function for the ESP32.
  *
  * This function initializes the ESP32 hardware and software components.
@@ -43,7 +48,7 @@
  */
 bool esp_setup();
 
-/*
+/**
  * @brief Initialize the scheduling tasks.
  *
  * This function creates the FreeRTOS tasks for the scheduling module.
@@ -52,7 +57,7 @@ bool esp_setup();
  */
 bool init_scheduling();
 
-/*
+/**
  * @brief Task function for handling WiFi events.
  *
  * This function is responsible for handling WiFi events in the background.
@@ -61,7 +66,7 @@ bool init_scheduling();
  */
 void wifiTask(void *pvParameters);
 
-/*
+/**
  * @brief Task function for handling MQTT events.
  *
  * This function is responsible for handling MQTT events in the background.
@@ -70,7 +75,16 @@ void wifiTask(void *pvParameters);
  */
 void mqttTask(void *pvParameters);
 
-/*
+/**
+ * @brief Task function for handling button events.
+ *
+ * This function is responsible for handling button events in the background.
+ *
+ * @param pvParameters pointer to task-specific data structure
+ */
+void buttonTask(void *pvParameters);
+
+/**
  * @brief Task function for handling fan control events.
  *
  * This function is responsible for handling fan control events in the background.
@@ -79,7 +93,7 @@ void mqttTask(void *pvParameters);
  */
 void fanControlTask(void *pvParameters);
 
-/*
+/**
  * @brief Task function for handling environmental measurement events.
  *
  * This function is responsible for handling environmental measurement events in the background.
