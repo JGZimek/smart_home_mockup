@@ -25,17 +25,17 @@ bool security_setup()
     //     return false;
     // }
 
-    // if (!init_pir())
-    // {
-    //     ESP_LOGE(SCHEDULING_TAG, "Failed to initialize PIR");
-    //     return false;
-    // }
+    if (!init_pir())
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Failed to initialize PIR");
+        return false;
+    }
 
-    // if (!init_buzzer())
-    // {
-    //     ESP_LOGE(SCHEDULING_TAG, "Failed to initialize Buzzer");
-    //     return false;
-    // }
+    if (!init_buzzer())
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Failed to initialize Buzzer");
+        return false;
+    }
 
     // if (!init_fire_sensor())
     // {
@@ -49,11 +49,11 @@ bool security_setup()
     //     return false;
     // }
 
-    // if (!init_scheduling())
-    // {
-    //     ESP_LOGE(SCHEDULING_TAG, "Failed to initialize scheduling");
-    //     return false;
-    // }
+    if (!init_scheduling())
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Failed to initialize scheduling");
+        return false;
+    }
     return true;
 }
 
@@ -180,7 +180,7 @@ void pirTask(void *pvParameters)
 {
     while (1)
     {
-        // handle_pir();
+        handle_pir();
         vTaskDelay(PIR_READ_FREQ / portTICK_PERIOD_MS);
     }
 }
