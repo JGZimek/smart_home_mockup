@@ -8,6 +8,7 @@ TaskHandle_t pirTaskHandle = NULL;
 TaskHandle_t buzzerTaskHandle = NULL;
 TaskHandle_t fireSensorTaskHandle = NULL;
 TaskHandle_t smokeDetectorTaskHandle = NULL;
+TaskHandle_t temperatureSensorTaskHandle = NULL;
 
 bool security_setup()
 {
@@ -49,11 +50,17 @@ bool security_setup()
     //     return false;
     // }
 
-    // if (!init_scheduling())
-    // {
-    //     ESP_LOGE(SCHEDULING_TAG, "Failed to initialize scheduling");
-    //     return false;
-    // }
+    if (!init_temperature_sensor())
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Failed to initialize Temperature Sensor");
+        return false;
+    }
+
+    if (!init_scheduling())
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Failed to initialize scheduling");
+        return false;
+    }
     return true;
 }
 
@@ -153,6 +160,21 @@ bool init_scheduling()
         return false;
     }
 
+    result = xTaskCreatePinnedToCore(
+        temperatureSensorTask,
+        "Smoke Detector Task",
+        TEMPERATURE_SENSOR_TASK_STACK_SIZE,
+        NULL,
+        TEMPERATURE_SENSOR_TASK_PRIORITY,
+        &temperatureSensorTaskHandle,
+        TEMPERATURE_SENSOR_CORE);
+
+    if (result != pdPASS)
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Failed to create Temperature Sensor Task");
+        return false;
+    }
+
     ESP_LOGI(SCHEDULING_TAG, "Scheduling initialized successfully");
 
     return true;
@@ -209,5 +231,14 @@ void smokeDetectorTask(void *pvParameters)
     {
         // handle_smoke_detector();
         vTaskDelay(SMOKE_DETECTOR_READ_FREQ / portTICK_PERIOD_MS);
+    }
+}
+
+void temperatureSensorTask(void *pvParameters)
+{
+    while (1)
+    {
+        handle_temperature_sensor();
+        vTaskDelay(TEMPERATURE_SENSOR_READ_FREQ / portTICK_PERIOD_MS);
     }
 }
