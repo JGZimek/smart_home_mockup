@@ -1,14 +1,14 @@
 #include "reed_relay.hpp"
 #include "esp_log.h"
 
-#define SENSOR_PIN 5 // GPIO pin where the fire sensor is connected
+#define SENSOR_PIN 5 // GPIO pin where the reed relay is connected
 #define SENSOR_TAG "reed_relay"
 #define LED_PIN 4
 
 bool init_reed_relay()
 {
-    pinMode(SENSOR_PIN, INPUT);   // Configure the buzzer pin as an input
-    pinMode(LED_PIN, OUTPUT); // Configure the LED pin as an output
+    pinMode(SENSOR_PIN, INPUT);   // Configure reed relay as an input
+    pinMode(LED_PIN, OUTPUT); // Configure the LED pin as an output (debugging purposes)
     digitalWrite(LED_PIN, LOW); // Turn off the LED initially
     ESP_LOGI(SENSOR_TAG, "Reed relay initialized on GPIO %d", SENSOR_PIN);
 
@@ -23,6 +23,6 @@ void handle_reed_relay()
     }
     else
     {
-        digitalWrite(LED_PIN, LOW); // Turn off the LED
+        digitalWrite(LED_PIN, LOW); 
     }
 }
