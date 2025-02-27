@@ -8,6 +8,7 @@ TaskHandle_t pirTaskHandle = NULL;
 TaskHandle_t buzzerTaskHandle = NULL;
 TaskHandle_t fireSensorTaskHandle = NULL;
 TaskHandle_t smokeDetectorTaskHandle = NULL;
+TaskHandle_t reedRelayTaskHandle = NULL;
 
 bool security_setup()
 {
@@ -48,12 +49,18 @@ bool security_setup()
     //     ESP_LOGE(SCHEDULING_TAG, "Failed to initialize Smoke Detector");
     //     return false;
     // }
+    
+    if(!init_reed_relay())
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Failed to initialize Reed Relay");
+        return false;
+    }
 
-    // if (!init_scheduling())
-    // {
-    //     ESP_LOGE(SCHEDULING_TAG, "Failed to initialize scheduling");
-    //     return false;
-    // }
+    if (!init_scheduling())
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Failed to initialize scheduling");
+        return false;
+    }
     return true;
 }
 
@@ -153,6 +160,15 @@ bool init_scheduling()
         return false;
     }
 
+    result = xTaskCreatePinnedToCore(
+        reedRelayTask,
+        "Reed Relay Task",
+        REED_RELAY_TASK_STACK_SIZE,
+        NULL,
+        REED_RELAY_TASK_PRIORITY,
+        &reedRelayTaskHandle,
+        REED_RELAY_CORE);
+
     ESP_LOGI(SCHEDULING_TAG, "Scheduling initialized successfully");
 
     return true;
@@ -209,5 +225,14 @@ void smokeDetectorTask(void *pvParameters)
     {
         // handle_smoke_detector();
         vTaskDelay(SMOKE_DETECTOR_READ_FREQ / portTICK_PERIOD_MS);
+    }
+}
+
+void reedRelayTask(void *pvParameters)
+{
+    while (1)
+    {
+        handle_reed_relay();
+        vTaskDelay(REED_RELAY_READ_FREQ / portTICK_PERIOD_MS);
     }
 }

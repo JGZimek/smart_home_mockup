@@ -10,6 +10,7 @@
 #include "../buzzer/buzzer.hpp"
 #include "../fire_sensor/fire_sensor.hpp"
 #include "../smoke_detector/smoke_detector.hpp"
+#include "../reed_relay/reed_relay.hpp"
 
 /* Task priorities */
 #define WIFI_TASK_PRIORITY 0
@@ -18,6 +19,7 @@
 #define BUZZER_TASK_PRIORITY 3
 #define FIRE_SENSOR_TASK_PRIORITY 4
 #define SMOKE_DETECTOR_TASK_PRIORITY 5
+#define REED_RELAY_TASK_PRIORITY 6 // to be improved later (also core assignment)
 
 /* Core assignments */
 #define WIFI_CORE 0
@@ -26,6 +28,7 @@
 #define BUZZER_CORE 0
 #define FIRE_SENSOR_CORE 1
 #define SMOKE_DETECTOR_CORE 1
+#define REED_RELAY_CORE 1 // to be improved later
 
 /* Task stack size */
 #define WIFI_TASK_STACK_SIZE 4096
@@ -34,6 +37,7 @@
 #define BUZZER_TASK_STACK_SIZE 2048
 #define FIRE_SENSOR_TASK_STACK_SIZE 2048
 #define SMOKE_DETECTOR_TASK_STACK_SIZE 2048
+#define REED_RELAY_TASK_STACK_SIZE 2048 // to be improved later
 
 /* Event frequencies in ms */
 #define WIFI_RECONNECT_FREQ 1000
@@ -42,6 +46,7 @@
 #define BUZZER_READ_FREQ 100
 #define FIRE_SENSOR_READ_FREQ 100
 #define SMOKE_DETECTOR_READ_FREQ 100
+#define REED_RELAY_READ_FREQ 100 // to be improved later
 
 /**
  * @brief Sets up the security system, initializes components, and starts scheduling.
@@ -117,3 +122,12 @@ void fireSensorTask(void *pvParameters);
  * @param pvParameters Task parameters
  */
 void smokeDetectorTask(void *pvParameters);
+
+/**
+ * @brief Task that handles reed relay.
+ *
+ * This task is responsible for handling the reed relay.
+ *
+ * @param pvParameters Task parameters
+ */
+void reedRelayTask(void *pvParameters);
