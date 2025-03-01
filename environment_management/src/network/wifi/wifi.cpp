@@ -1,4 +1,6 @@
 #include "wifi.hpp"
+#include "esp_log.h"
+#include "../access_point/access_point.hpp" // Pozwala sprawdzić, czy tryb AP jest aktywny.
 
 const char *WiFiManager::WIFI_TAG = "app_wifi";
 WiFiManager *WiFiManager::instance = nullptr;
@@ -47,11 +49,9 @@ bool WiFiManager::saveCredentials(const WifiCredentials &credentials)
 bool WiFiManager::configure(const String &ssid, const String &password)
 {
     WifiCredentials credentials;
-
     credentials.ssid = ssid;
     credentials.password = password;
     credentials.isConfigured = (!ssid.isEmpty() && !password.isEmpty());
-
     return saveCredentials(credentials);
 }
 
@@ -69,11 +69,13 @@ bool WiFiManager::isConfigured() const
 
 bool WiFiManager::begin()
 {
+    // Ustawienie trybu STA, wyłączenie poprzednich połączeń i rejestracja handlera zdarzeń.
     WiFi.mode(WIFI_STA);
     WiFi.disconnect();
     WiFi.onEvent(WiFiManager::wifiEventHandler);
 
-    return this->connect();
+    // Jednorazowa próba połączenia – niezależnie od wyniku, wykonywanie programu jest kontynuowane.
+    return connect();
 }
 
 bool WiFiManager::connect()
@@ -89,13 +91,8 @@ bool WiFiManager::connect()
     ESP_LOGI(WIFI_TAG, "WiFi connecting: SSID=%s", credentials.ssid.c_str());
     WiFi.begin(credentials.ssid.c_str(), credentials.password.c_str());
 
-    int retryCount = 0;
-    while (WiFi.status() != WL_CONNECTED && retryCount < MAX_RETRY_COUNT)
-    {
-        ESP_LOGI(WIFI_TAG, "Connection attempt... (%d/%d)", retryCount + 1, MAX_RETRY_COUNT);
-        delay(1000);
-        retryCount++;
-    }
+    // Krótkie opóźnienie, aby dać czas na rozpoczęcie procedury łączenia.
+    vTaskDelay(100 / portTICK_PERIOD_MS);
 
     if (WiFi.status() == WL_CONNECTED)
     {
@@ -105,7 +102,7 @@ bool WiFiManager::connect()
     }
     else
     {
-        ESP_LOGE(WIFI_TAG, "Failed to connect to WiFi after %d attempts.", MAX_RETRY_COUNT);
+        ESP_LOGW(WIFI_TAG, "Initial connection attempt failed.");
         return false;
     }
 }
@@ -115,7 +112,8 @@ bool WiFiManager::reconnect()
     if (WiFi.status() != WL_CONNECTED)
     {
         ESP_LOGW(WIFI_TAG, "Reconnecting to WiFi...");
-        delay(RECONNECT_DELAY_MS);
+        // Krótka przerwa (nieblokująca dalsze działanie systemu)
+        vTaskDelay(RECONNECT_DELAY_MS / portTICK_PERIOD_MS);
         return connect();
     }
     return true;
@@ -123,12 +121,20 @@ bool WiFiManager::reconnect()
 
 void WiFiManager::handle()
 {
+    // Jeśli tryb AP jest aktywny, nie podejmujemy prób połączenia.
+    if (AccessPoint::isAPActive())
+        return;
+
     if (WiFi.status() != WL_CONNECTED)
     {
-        ESP_LOGW(WIFI_TAG, "WiFi connection lost, trying to reconnect...");
-        if (!reconnect())
+        // Co RECONNECT_DELAY_MS podejmujemy próbę ponownego połączenia.
+        static unsigned long lastAttemptTime = 0;
+        unsigned long currentTime = millis();
+        if (currentTime - lastAttemptTime >= RECONNECT_DELAY_MS)
         {
-            ESP_LOGE(WIFI_TAG, "Failed to restore WiFi connection.");
+            ESP_LOGI(WIFI_TAG, "Re-attempting WiFi connection...");
+            reconnect();
+            lastAttemptTime = currentTime;
         }
     }
     else if (!wasConnected)
@@ -158,7 +164,6 @@ void WiFiManager::wifiEventHandler(WiFiEvent_t event)
     case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
         ESP_LOGE(instance->WIFI_TAG, "WiFi disconnected.");
         instance->wasConnected = false;
-        instance->reconnect();
         break;
     default:
         ESP_LOGW(instance->WIFI_TAG, "Unhandled WiFi event.");
