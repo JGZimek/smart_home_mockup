@@ -4,143 +4,123 @@
 #include <WiFi.h>
 #include <WebServer.h>
 #include <Preferences.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 /**
- * @brief Class managing persistent storage of WiFi configuration and MQTT settings.
+ * @brief Class for managing persistent WiFi/MQTT configuration using NVS.
  */
 class WiFiCredentialsStore
 {
 public:
     /**
-     * @brief Constructor – allows you to set the namespace for Preferences.
-     * @param ns Namespace, defaults to "wifi".
+     * @brief Constructor with namespace initialization.
+     * @param ns The namespace to use for storing preferences (default is "wifi").
      */
-    WiFiCredentialsStore(const char *ns = "wifi") : _namespace(ns) {}
+    explicit WiFiCredentialsStore(const char *ns = "wifi");
 
     /**
-     * @brief Checks if the configuration has already been saved.
-     * @return true if the configuration exists, false otherwise.
+     * @brief Checks if configuration data is stored.
+     * @return True if configuration exists, false otherwise.
      */
-    bool isConfigured() const
-    {
-        Preferences preferences;
-        preferences.begin(_namespace, true);
-        bool configured = preferences.getBool("configured", false);
-        preferences.end();
-        return configured;
-    }
+    bool isConfigured() const;
 
     /**
-     * @brief Saves configuration data.
-     * @param ssid WiFi network name.
-     * @param password WiFi network password.
-     * @param mqttBroker MQTT broker address.
-     * @param mqttPort MQTT broker port.
-     * @param mqttClientId MQTT client identifier.
-     * @return true if save was successful, false otherwise.
+     * @brief Saves WiFi and MQTT configuration.
+     * @param ssid The WiFi network name.
+     * @param password The WiFi password.
+     * @param mqttBroker The MQTT broker address.
+     * @param mqttPort The MQTT broker port.
+     * @param mqttClientId The MQTT client identifier.
+     * @return True if the save operation was successful.
      */
     bool save(const String &ssid, const String &password,
-              const String &mqttBroker, int mqttPort, const String &mqttClientId)
-    {
-        Preferences preferences;
-        if (!preferences.begin(_namespace, false))
-        {
-            return false;
-        }
-        bool result = true;
-        result &= preferences.putString("ssid", ssid);
-        result &= preferences.putString("password", password);
-        result &= preferences.putString("mqtt_broker", mqttBroker);
-        result &= preferences.putInt("mqtt_port", mqttPort);
-        result &= preferences.putString("mqtt_client_id", mqttClientId);
-        result &= preferences.putBool("configured", true);
-        preferences.end();
-        return result;
-    }
+              const String &mqttBroker, int mqttPort, const String &mqttClientId);
 
     /**
-     * @brief Reads saved configuration data.
-     * @param ssid (output) read SSID.
-     * @param password (output) read password.
-     * @param mqttBroker (output) read MQTT broker address.
-     * @param mqttPort (output) read MQTT broker port.
-     * @param mqttClientId (output) read MQTT client identifier.
-     * @return true if configuration is complete, false otherwise.
+     * @brief Loads stored configuration.
+     * @param ssid (Output) The WiFi network name.
+     * @param password (Output) The WiFi password.
+     * @param mqttBroker (Output) The MQTT broker address.
+     * @param mqttPort (Output) The MQTT broker port.
+     * @param mqttClientId (Output) The MQTT client identifier.
+     * @return True if configuration is complete.
      */
     bool load(String &ssid, String &password, String &mqttBroker,
-              int &mqttPort, String &mqttClientId)
-    {
-        Preferences preferences;
-        if (!preferences.begin(_namespace, true))
-        {
-            return false;
-        }
-        ssid = preferences.getString("ssid", "");
-        password = preferences.getString("password", "");
-        mqttBroker = preferences.getString("mqtt_broker", "");
-        mqttPort = preferences.getInt("mqtt_port", 1883);
-        mqttClientId = preferences.getString("mqtt_client_id", "");
-        bool configured = preferences.getBool("configured", false);
-        preferences.end();
-        return configured && !ssid.isEmpty() && !password.isEmpty() && !mqttBroker.isEmpty();
-    }
+              int &mqttPort, String &mqttClientId);
 
 private:
     const char *_namespace;
 };
 
 /**
- * @brief Class supporting Access Point mode and HTTP server, allowing device configuration.
+ * @brief Class for managing the Access Point (AP) mode and HTTP server for configuration.
+ *
+ * The AP mode remains active until the user triggers a long-press of the button,
+ * which calls the static method requestAPExit().
  */
 class AccessPoint
 {
 public:
     /**
      * @brief Constructor.
-     * @param apSSID Access Point's SSID.
-     * @param apPassword Access Point's password.
-     * @param port Port on which the HTTP server should run (default 80).
+     * @param apSSID The SSID of the access point.
+     * @param apPassword The password of the access point.
+     * @param port The port number for the HTTP server (default is 80).
      */
     AccessPoint(const char *apSSID, const char *apPassword, uint16_t port = 80);
 
     /**
-     * @brief Starts the Access Point mode and HTTP server.
+     * @brief Starts the Access Point and HTTP server.
      */
     void start();
 
     /**
-     * @brief Stops the Access Point mode and HTTP server.
+     * @brief Stops the Access Point and HTTP server.
      */
     void stop();
 
     /**
-     * @brief Handles incoming HTTP requests.
+     * @brief Processes incoming HTTP client requests.
      */
     void handleRequests();
 
     /**
-     * @brief Runs the Access Point mode and HTTP server.
+     * @brief Runs the AP mode. The AP remains active until requestAPExit() is called.
      */
     void run();
 
+    /**
+     * @brief Checks whether AP mode is currently active.
+     * @return True if AP mode is active.
+     */
+    static bool isAPActive();
+
+    /**
+     * @brief Signals that AP mode should exit.
+     */
+    static void requestAPExit();
+
+    /**
+     * @brief Launches the AP mode in a new FreeRTOS task.
+     * @param apSSID The SSID for the AP.
+     * @param apPassword The password for the AP.
+     */
+    static void startAPTask(const char *apSSID, const char *apPassword);
+
 private:
-    /**
-     * @brief Sets up the HTTP routes.
-     */
     void setupRoutes();
-
-    /**
-     * @brief Handles the root route ("/").
-     */
     void handleRoot();
-
-    /**
-     * @brief Handles the WiFi configuration route ("/wifi").
-     */
     void handleSave();
 
     const char *_apSSID;
     const char *_apPassword;
     WebServer _server;
     WiFiCredentialsStore _credentialsStore;
+
+    // Static flags controlling AP mode.
+    static volatile bool _apModeActive;
+    static volatile bool _apExitRequested;
+    // Static handle for the AP task.
+    static TaskHandle_t _apTaskHandle;
 };

@@ -1,12 +1,60 @@
 #include "access_point.hpp"
 
+// WiFiCredentialsStore implementation
+WiFiCredentialsStore::WiFiCredentialsStore(const char *ns) : _namespace(ns) {}
+
+bool WiFiCredentialsStore::isConfigured() const
+{
+    Preferences preferences;
+    preferences.begin(_namespace, true);
+    bool configured = preferences.getBool("configured", false);
+    preferences.end();
+    return configured;
+}
+
+bool WiFiCredentialsStore::save(const String &ssid, const String &password,
+                                const String &mqttBroker, int mqttPort, const String &mqttClientId)
+{
+    Preferences preferences;
+    if (!preferences.begin(_namespace, false))
+        return false;
+    bool result = true;
+    result &= preferences.putString("ssid", ssid);
+    result &= preferences.putString("password", password);
+    result &= preferences.putString("mqtt_broker", mqttBroker);
+    result &= preferences.putInt("mqtt_port", mqttPort);
+    result &= preferences.putString("mqtt_client_id", mqttClientId);
+    result &= preferences.putBool("configured", true);
+    preferences.end();
+    return result;
+}
+
+bool WiFiCredentialsStore::load(String &ssid, String &password, String &mqttBroker,
+                                int &mqttPort, String &mqttClientId)
+{
+    Preferences preferences;
+    if (!preferences.begin(_namespace, true))
+        return false;
+    ssid = preferences.getString("ssid", "");
+    password = preferences.getString("password", "");
+    mqttBroker = preferences.getString("mqtt_broker", "");
+    mqttPort = preferences.getInt("mqtt_port", 1883);
+    mqttClientId = preferences.getString("mqtt_client_id", "");
+    bool configured = preferences.getBool("configured", false);
+    preferences.end();
+    return configured && !ssid.isEmpty() && !password.isEmpty() && !mqttBroker.isEmpty();
+}
+
+// Static variable definitions
+volatile bool AccessPoint::_apModeActive = false;
+volatile bool AccessPoint::_apExitRequested = false;
+TaskHandle_t AccessPoint::_apTaskHandle = NULL;
+
 AccessPoint::AccessPoint(const char *apSSID, const char *apPassword, uint16_t port)
     : _apSSID(apSSID),
       _apPassword(apPassword),
       _server(port),
-      _credentialsStore("wifi")
-{
-}
+      _credentialsStore("wifi") {}
 
 void AccessPoint::start()
 {
@@ -33,9 +81,9 @@ void AccessPoint::handleRequests()
 void AccessPoint::setupRoutes()
 {
     _server.on("/", HTTP_GET, [this]()
-               { this->handleRoot(); });
+               { handleRoot(); });
     _server.on("/save", HTTP_POST, [this]()
-               { this->handleSave(); });
+               { handleSave(); });
 }
 
 void AccessPoint::handleRoot()
@@ -73,8 +121,7 @@ void AccessPoint::handleSave()
             Serial.printf("Saved settings: SSID=%s, PASSWORD=%s, MQTT Broker=%s, Port=%d, Client ID=%s\n",
                           ssid.c_str(), password.c_str(), mqttBroker.c_str(), mqttPort, mqttClientId.c_str());
             _server.send(200, "text/html",
-                         "<html><body><h1>Settings Saved. AP will stop now.</h1></body></html>");
-            stop();
+                         "<html><body><h1>Settings Saved. AP remains active until button long-press.</h1></body></html>");
         }
         else
         {
@@ -91,24 +138,52 @@ void AccessPoint::handleSave()
 
 void AccessPoint::run()
 {
+    _apModeActive = true;
+    _apExitRequested = false;
     start();
-    bool credentialsSaved = false;
-    while (!credentialsSaved)
+    Serial.println("AP mode active. Awaiting user exit (long-press button).");
+    while (!_apExitRequested)
     {
         handleRequests();
-
-        String ssid, password, mqttBroker, mqttClientId;
-        int mqttPort = 0;
-        if (_credentialsStore.load(ssid, password, mqttBroker, mqttPort, mqttClientId))
-        {
-            Serial.printf("[AccessPoint] Credentials saved. SSID=%s, MQTT Broker=%s\n", ssid.c_str(), mqttBroker.c_str());
-            credentialsSaved = true;
-        }
-        else
-        {
-            Serial.println("[AccessPoint] Waiting for user to input new credentials...");
-        }
         vTaskDelay(500 / portTICK_PERIOD_MS);
     }
     stop();
+    _apModeActive = false;
+}
+
+bool AccessPoint::isAPActive()
+{
+    return _apModeActive;
+}
+
+void AccessPoint::requestAPExit()
+{
+    _apExitRequested = true;
+}
+
+void AccessPoint::startAPTask(const char *apSSID, const char *apPassword)
+{
+    if (_apTaskHandle == NULL)
+    {
+        AccessPoint *apInstance = new AccessPoint(apSSID, apPassword);
+        BaseType_t result = xTaskCreate(
+            [](void *param)
+            {
+                AccessPoint *ap = static_cast<AccessPoint *>(param);
+                ap->run();
+                delete ap;
+                _apTaskHandle = NULL;
+                vTaskDelete(NULL);
+            },
+            "APTask",
+            4096,
+            apInstance,
+            1,
+            &_apTaskHandle);
+        if (result != pdPASS)
+        {
+            Serial.println("Failed to create AP task.");
+            delete apInstance;
+        }
+    }
 }

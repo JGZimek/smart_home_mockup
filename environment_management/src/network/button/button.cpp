@@ -13,14 +13,21 @@ Button::Button(uint8_t pin, uint32_t holdTime, uint32_t debounceDelay)
       _pressStartTime(0),
       _longPressTriggered(false)
 {
-    // Set default callback that launches AP mode for reconfiguration.
+    // Domyślny callback:
+    // - Jeśli tryb AP nie jest aktywny, uruchamia AP.
+    // - Jeśli tryb AP już działa, wywołuje zakończenie trybu AP.
     _longPressCallback = []()
     {
-        ESP_LOGI(Button::BUTTON_TAG, "Button long-pressed. Launching AP mode for reconfiguration...");
-        // Create an AccessPoint object and run configuration mode.
-        AccessPoint ap("ESP32_Config", "config123");
-        ap.run(); // This call blocks until new settings are entered.
-        // Optionally: you may trigger a system restart or further actions after AP mode.
+        if (AccessPoint::isAPActive())
+        {
+            ESP_LOGI(Button::BUTTON_TAG, "Button long-pressed. Exiting AP mode...");
+            AccessPoint::requestAPExit();
+        }
+        else
+        {
+            ESP_LOGI(Button::BUTTON_TAG, "Button long-pressed. Launching AP mode for reconfiguration...");
+            AccessPoint::startAPTask("ESP32_Config", "config123");
+        }
     };
 }
 
@@ -41,12 +48,12 @@ void Button::setLongPressCallback(std::function<void()> callback)
 void Button::handle()
 {
     bool reading = (digitalRead(_pin) == LOW);
-    ESP_LOGI(BUTTON_TAG, "Button reading: %s", reading ? "PRESSED" : "RELEASED");
+    ESP_LOGV(BUTTON_TAG, "Button reading: %s", reading ? "PRESSED" : "RELEASED");
 
     if (reading != _previousState)
     {
         _lastDebounceTime = millis();
-        ESP_LOGI(BUTTON_TAG, "Debounce reset");
+        ESP_LOGV(BUTTON_TAG, "Debounce reset");
     }
     if ((millis() - _lastDebounceTime) > _debounceDelay)
     {
@@ -57,7 +64,7 @@ void Button::handle()
             {
                 _pressStartTime = millis();
                 _longPressTriggered = false;
-                ESP_LOGI(BUTTON_TAG, "Button pressed, timer started");
+                ESP_LOGV(BUTTON_TAG, "Button pressed, timer started");
             }
         }
     }
@@ -65,11 +72,11 @@ void Button::handle()
     if (_currentState && !_longPressTriggered)
     {
         unsigned long elapsed = millis() - _pressStartTime;
-        ESP_LOGI(BUTTON_TAG, "Button held for %lu ms", elapsed);
+        ESP_LOGV(BUTTON_TAG, "Button held for %lu ms", elapsed);
         if (elapsed >= _holdTime)
         {
             _longPressTriggered = true;
-            ESP_LOGI(BUTTON_TAG, "Long press detected!");
+            ESP_LOGD(BUTTON_TAG, "Long press detected!");
             if (_longPressCallback)
             {
                 _longPressCallback();
