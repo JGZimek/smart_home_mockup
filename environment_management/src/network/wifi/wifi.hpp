@@ -5,87 +5,76 @@
 #include <Preferences.h>
 
 /**
- * @brief WiFiManager class.
+ * @brief Class for managing the WiFi connection.
  *
- * This class provides functionality for managing the WiFi connection.
+ * This class encapsulates the functionality of configuring and maintaining
+ * a WiFi connection. It loads/saves credentials using Preferences, attempts a
+ * one-time connection in begin(), and then periodically checks and reconnects if needed.
  */
 class WiFiManager
 {
 public:
     /**
-     * @brief Default constructor for the WiFiManager class.
-     *
-     * This constructor initializes the WiFiManager instance.
+     * @brief Constructs a new WiFiManager object.
      */
     WiFiManager();
 
     /**
-     * @brief Default destructor for the WiFiManager class.
-     *
-     * This destructor cleans up the WiFiManager instance.
+     * @brief Destroys the WiFiManager object.
      */
     ~WiFiManager();
 
     /**
-     * @brief Configure the WiFiManager with the given SSID and password.
+     * @brief Configures the WiFi credentials.
      *
-     * This function configures the WiFiManager with the given SSID and password.
-     *
-     * @param ssid the SSID of the WiFi network
-     * @param password the password of the WiFi network
-     * @return true if configuration was successful, false otherwise
+     * @param ssid The SSID of the WiFi network.
+     * @param password The password for the WiFi network.
+     * @return true if configuration was successful, false otherwise.
      */
     bool configure(const String &ssid, const String &password);
 
     /**
-     * @brief Check if the WiFiManager is configured.
+     * @brief Checks if WiFi credentials have been configured.
      *
-     * This function checks if the WiFiManager is configured.
-     *
-     * @return true if the WiFiManager is configured, false otherwise
+     * @return true if configured, false otherwise.
      */
     bool isConfigured() const;
 
     /**
-     * @brief Begin the WiFiManager.
+     * @brief Begins the WiFi connection process.
      *
-     * This function begins the WiFiManager.
+     * This method sets the WiFi mode to STA, clears previous connections,
+     * registers the event handler, and performs a one-time connection attempt.
+     * Execution continues regardless of the result.
      *
-     * @return true if the WiFiManager was successfully started, false otherwise
+     * @return true if the one-time connection attempt succeeded, false otherwise.
      */
     bool begin();
 
     /**
-     * @brief Connect to the WiFi network.
+     * @brief Performs a one-time connection attempt.
      *
-     * This function connects to the WiFi network.
-     *
-     * @return true if the connection was successful, false otherwise
+     * @return true if connected, false otherwise.
      */
     bool connect();
 
     /**
-     * @brief Reconnect to the WiFi network.
+     * @brief Attempts to reconnect if the connection is lost.
      *
-     * This function reconnects to the WiFi network.
-     *
-     * @return true if the reconnection was successful, false otherwise
+     * @return true if reconnection was successful, false otherwise.
      */
     bool reconnect();
 
     /**
-     * @brief Handle WiFi events.
+     * @brief Handles WiFi connection status.
      *
-     * This function handles WiFi events.
+     * This method should be called periodically (e.g., in a FreeRTOS task) to
+     * monitor the connection status and, if necessary, trigger reconnection attempts.
      */
     void handle();
 
 private:
-    /**
-     * @brief WiFi credentials structure.
-     *
-     * This structure holds the WiFi credentials.
-     */
+    /// Structure to store WiFi credentials.
     struct WifiCredentials
     {
         String ssid;
@@ -94,37 +83,33 @@ private:
     };
 
     /**
-     * @brief Load WiFi credentials.
+     * @brief Loads WiFi credentials from Preferences.
      *
-     * This function loads the WiFi credentials.
-     *
-     * @return the WiFi credentials
+     * @return A WifiCredentials structure containing the stored data.
      */
     WifiCredentials loadCredentials();
 
     /**
-     * @brief Save WiFi credentials.
+     * @brief Saves WiFi credentials to Preferences.
      *
-     * This function saves the WiFi credentials.
-     *
-     * @param credentials the WiFi credentials to save
-     * @return true if the credentials were saved successfully, false otherwise
+     * @param credentials The credentials to save.
+     * @return true if the save operation was successful, false otherwise.
      */
     bool saveCredentials(const WifiCredentials &credentials);
 
-    bool wasConnected;
+    bool _wasConnected; ///< Flag indicating if the connection was ever established.
 
-    static const int MAX_RETRY_COUNT = 10;
-    static const int RECONNECT_DELAY_MS = 5000;
-    static const char *WIFI_TAG;
-    static WiFiManager *instance;
+    static const int MAX_RETRY_COUNT = 10;      ///< Maximum retry count (used in connect()).
+    static const int RECONNECT_DELAY_MS = 5000; ///< Delay (ms) between reconnection attempts.
+    static const char *WIFI_TAG;                ///< Logging tag for WiFiManager.
+    static WiFiManager *instance;               ///< Static instance pointer for event handling.
 
     /**
-     * @brief WiFi event handler.
+     * @brief WiFi event handler function.
      *
-     * This function handles WiFi events.
+     * This static function handles WiFi events and forwards them to the instance.
      *
-     * @param event the WiFi event
+     * @param event The WiFi event.
      */
     static void wifiEventHandler(WiFiEvent_t event);
 };

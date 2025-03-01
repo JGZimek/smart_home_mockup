@@ -26,12 +26,8 @@ bool esp_setup()
     // Attempt to initialize WiFi connection (which loads its configuration from Preferences)
     wifiManager.begin();
 
-    // // Attempt to initialize MQTT connection (which loads its configuration from Preferences)
-    // if (!mqttManager.begin())
-    // {
-    //     ESP_LOGE(SCHEDULING_TAG, "MQTT Manager setup failed.");
-    //     // return false;
-    // }
+    // Attempt to initialize MQTT connection (which loads its configuration from Preferences)
+    mqttManager.begin();
 
     // if (!init_fan_control())
     // {
@@ -89,19 +85,19 @@ bool init_scheduling()
         return false;
     }
 
-    // result = xTaskCreatePinnedToCore(
-    //     mqttTask,
-    //     "mqtt_task",
-    //     MQTT_TASK_STACK_SIZE,
-    //     NULL,
-    //     MQTT_TASK_PRIORITY,
-    //     &mqtt_task,
-    //     MQTT_TASK_CORE);
-    // if (result != pdPASS)
-    // {
-    //     ESP_LOGE(SCHEDULING_TAG, "Failed to create mqtt task.");
-    //     return false;
-    // }
+    result = xTaskCreatePinnedToCore(
+        mqttTask,
+        "mqtt_task",
+        MQTT_TASK_STACK_SIZE,
+        NULL,
+        MQTT_TASK_PRIORITY,
+        &mqtt_task,
+        MQTT_TASK_CORE);
+    if (result != pdPASS)
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Failed to create mqtt task.");
+        return false;
+    }
 
     // result = xTaskCreatePinnedToCore(
     //     fanControlTask,

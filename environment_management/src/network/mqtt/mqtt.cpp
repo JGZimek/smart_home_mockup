@@ -2,7 +2,7 @@
 
 #define MQTT_TAG_LOG "app_mqtt"
 
-// Define the static members
+// Static member definitions
 const char *MqttManager::MQTT_TAG = MQTT_TAG_LOG;
 MqttManager *MqttManager::instance = nullptr;
 
@@ -47,7 +47,8 @@ MqttManager::MqttCredentials MqttManager::loadCredentials()
 {
     MqttCredentials creds = {"", 1883, "ESP32Client", false};
     Preferences preferences;
-    preferences.begin("wifi", true); // using the same namespace as WiFi
+    // Using the same namespace as WiFi for simplicity.
+    preferences.begin("wifi", true);
     creds.broker = preferences.getString("mqtt_broker", "");
     creds.port = preferences.getInt("mqtt_port", 1883);
     creds.clientId = preferences.getString("mqtt_client_id", "ESP32Client");
@@ -84,36 +85,43 @@ bool MqttManager::begin()
     ESP_LOGI(MQTT_TAG, "Connecting to MQTT broker %s:%d with client ID %s...",
              credentials.broker.c_str(), credentials.port, credentials.clientId.c_str());
 
-    int retryCount = 0;
-    while (!mqttClient.connect(credentials.clientId.c_str()) && retryCount < MAX_RETRY_COUNT)
-    {
-        ESP_LOGI(MQTT_TAG, "MQTT connection attempt %d/%d", retryCount + 1, MAX_RETRY_COUNT);
-        delay(1000);
-        retryCount++;
-    }
-
-    if (mqttClient.connected())
+    // Single connection attempt.
+    bool connected = mqttClient.connect(credentials.clientId.c_str());
+    if (connected)
     {
         ESP_LOGI(MQTT_TAG, "Connected to MQTT broker.");
         mqttConnected = true;
-        return true;
     }
     else
     {
-        ESP_LOGE(MQTT_TAG, "Failed to connect to MQTT broker after %d attempts.", MAX_RETRY_COUNT);
+        ESP_LOGW(MQTT_TAG, "Initial MQTT connection attempt failed.");
         mqttConnected = false;
-        return false;
     }
+    return connected;
 }
 
 void MqttManager::handle()
 {
+    // If not connected, attempt reconnection every RECONNECT_DELAY_MS.
     if (!mqttClient.connected())
     {
-        ESP_LOGW(MQTT_TAG, "MQTT connection lost. Attempting reconnection...");
-        if (!begin())
+        static unsigned long lastAttemptTime = 0;
+        unsigned long currentTime = millis();
+        if (currentTime - lastAttemptTime >= RECONNECT_DELAY_MS)
         {
-            ESP_LOGE(MQTT_TAG, "Reconnection to MQTT broker failed.");
+            ESP_LOGW(MQTT_TAG, "MQTT connection lost. Attempting reconnection...");
+            bool connected = mqttClient.connect(credentials.clientId.c_str());
+            if (connected)
+            {
+                ESP_LOGI(MQTT_TAG, "Reconnected to MQTT broker.");
+                mqttConnected = true;
+            }
+            else
+            {
+                ESP_LOGE(MQTT_TAG, "MQTT reconnection attempt failed.");
+                mqttConnected = false;
+            }
+            lastAttemptTime = currentTime;
         }
     }
     mqttClient.loop();
@@ -148,9 +156,8 @@ bool MqttManager::publishPinpadEvent(const String &pinCode)
 
 void MqttManager::registerCallback(const String &topic, std::function<void(const String &topic, const String &payload)> callback)
 {
-    TopicCallback tc;
-    tc.topic = topic;
-    tc.callback = callback;
+    // Add new topic callback and subscribe to the topic.
+    struct TopicCallback tc = {topic, callback};
     callbacks.push_back(tc);
     subscribeTopic(topic);
 }

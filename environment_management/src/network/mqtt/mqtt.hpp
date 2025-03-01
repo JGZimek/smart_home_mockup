@@ -9,23 +9,22 @@
 #include "esp_log.h"
 
 /**
- * @brief MqttManager class.
+ * @brief Class for managing the MQTT connection.
  *
- * This class provides functionality for managing the MQTT connection.
- * It loads the configuration from Preferences, connects to the broker,
- * handles reconnection and incoming messages, and offers an extensible interface
- * for publishing and registering topic-specific callbacks.
+ * This class handles configuration (via Preferences), connects to the MQTT broker,
+ * monitors connection status and handles reconnection. It also provides an interface
+ * for publishing messages and registering topic-specific callbacks.
  */
 class MqttManager
 {
 public:
     /**
-     * @brief Constructor.
+     * @brief Constructs a new MqttManager object.
      */
     MqttManager();
 
     /**
-     * @brief Destructor.
+     * @brief Destroys the MqttManager object.
      */
     ~MqttManager();
 
@@ -51,7 +50,8 @@ public:
     /**
      * @brief Begins the MQTT connection.
      *
-     * Loads the configuration from Preferences and attempts to connect to the MQTT broker.
+     * Loads the configuration from Preferences and attempts a one-time connection
+     * to the MQTT broker. Further reconnection attempts are handled in handle().
      *
      * @return true if connected successfully, false otherwise.
      */
@@ -61,6 +61,7 @@ public:
      * @brief Handles MQTT events.
      *
      * Should be called periodically (e.g. in a FreeRTOS task) to maintain the connection.
+     * In case the connection is lost, a reconnection attempt is made.
      */
     void handle();
 
@@ -115,9 +116,7 @@ public:
     bool isConnected();
 
 private:
-    /**
-     * @brief Structure for holding MQTT credentials.
-     */
+    /// Structure for holding MQTT credentials.
     struct MqttCredentials
     {
         String broker;
@@ -157,9 +156,7 @@ private:
     MqttCredentials credentials; ///< MQTT credentials.
     bool mqttConnected;          ///< Connection status flag.
 
-    /**
-     * @brief Structure for mapping a topic to a callback.
-     */
+    /// Structure for mapping a topic to a callback.
     struct TopicCallback
     {
         String topic;
@@ -172,9 +169,9 @@ private:
     static constexpr const char *RFID_TOPIC = "smarthome/security/RFID/data";
     static constexpr const char *PINPAD_TOPIC = "smarthome/security/pinpad/data";
 
-    static const int MAX_RETRY_COUNT = 10;
-    static const int RECONNECT_DELAY_MS = 5000;
+    static const int MAX_RETRY_COUNT = 10;      ///< Maximum retry count (unused in current implementation).
+    static const int RECONNECT_DELAY_MS = 5000; ///< Delay (ms) between reconnection attempts.
 
     static const char *MQTT_TAG;  ///< Logging tag.
-    static MqttManager *instance; ///< Static pointer for the callback.
+    static MqttManager *instance; ///< Static instance pointer for the callback.
 };

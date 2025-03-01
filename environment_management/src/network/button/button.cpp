@@ -1,6 +1,6 @@
 #include "button.hpp"
 
-// Define the static BUTTON_TAG variable.
+// Define the static logging tag.
 const char *Button::BUTTON_TAG = "app_button";
 
 Button::Button(uint8_t pin, uint32_t holdTime, uint32_t debounceDelay)
@@ -13,9 +13,9 @@ Button::Button(uint8_t pin, uint32_t holdTime, uint32_t debounceDelay)
       _pressStartTime(0),
       _longPressTriggered(false)
 {
-    // Domyślny callback:
-    // - Jeśli tryb AP nie jest aktywny, uruchamia AP.
-    // - Jeśli tryb AP już działa, wywołuje zakończenie trybu AP.
+    // Default long-press callback:
+    // If the AP mode is inactive, start AP mode;
+    // if AP mode is active, request exit from AP mode.
     _longPressCallback = []()
     {
         if (AccessPoint::isAPActive())
@@ -47,14 +47,18 @@ void Button::setLongPressCallback(std::function<void()> callback)
 
 void Button::handle()
 {
+    // Read the current state (active low)
     bool reading = (digitalRead(_pin) == LOW);
     ESP_LOGV(BUTTON_TAG, "Button reading: %s", reading ? "PRESSED" : "RELEASED");
 
+    // If the reading has changed, reset the debounce timer.
     if (reading != _previousState)
     {
         _lastDebounceTime = millis();
         ESP_LOGV(BUTTON_TAG, "Debounce reset");
     }
+
+    // If enough time has passed since the last change, update the stable state.
     if ((millis() - _lastDebounceTime) > _debounceDelay)
     {
         if (reading != _currentState)
@@ -69,6 +73,8 @@ void Button::handle()
         }
     }
     _previousState = reading;
+
+    // If the button is pressed and a long press hasn't yet been triggered, check elapsed time.
     if (_currentState && !_longPressTriggered)
     {
         unsigned long elapsed = millis() - _pressStartTime;
