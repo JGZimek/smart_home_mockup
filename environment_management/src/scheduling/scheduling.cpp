@@ -1,6 +1,4 @@
 #include "scheduling.hpp"
-#include "esp_log.h"
-#include "nvs_flash.h" // Dodana inicjalizacja NVS
 
 #define SCHEDULING_TAG "app_scheduling"
 
@@ -9,6 +7,8 @@ TaskHandle_t mqtt_task;
 TaskHandle_t fan_control_task;
 TaskHandle_t env_measurement_task;
 TaskHandle_t button_task;
+TaskHandle_t led_control_task;
+TaskHandle_t energy_monitor_task;
 
 WiFiManager wifiManager;
 MqttManager mqttManager;
@@ -26,8 +26,30 @@ bool esp_setup()
 
     wifiManager.begin();
     mqttManager.begin();
-    // if (!init_fan_control()) { ... }
-    // if (!init_env_measurement()) { ... }
+
+    if (!init_fan_control())
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Fan control initialization failed.");
+        return false;
+    }
+
+    if (!init_env_measurement())
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Environmental measurement initialization failed.");
+        return false;
+    }
+
+    if (!init_led_control())
+    {
+        ESP_LOGE(SCHEDULING_TAG, "LED control initialization failed.");
+        return false;
+    }
+
+    if (!init_energy_monitor())
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Energy monitor initialization failed.");
+        return false;
+    }
 
     if (!init_scheduling())
     {
@@ -87,33 +109,47 @@ bool init_scheduling()
         return false;
     }
 
-    // result = xTaskCreatePinnedToCore(
-    //     fanControlTask,
-    //     "fan_control_task",
-    //     FAN_CONTROL_TASK_STACK_SIZE,
-    //     NULL,
-    //     FAN_CONTROL_TASK_PRIORITY,
-    //     &fan_control_task,
-    //     FAN_CONTROL_TASK_CORE);
-    // if (result != pdPASS)
-    // {
-    //     ESP_LOGE(SCHEDULING_TAG, "Failed to create fan control task.");
-    //     return false;
-    // }
+    result = xTaskCreatePinnedToCore(
+        fanControlTask,
+        "fan_control_task",
+        FAN_CONTROL_TASK_STACK_SIZE,
+        NULL,
+        FAN_CONTROL_TASK_PRIORITY,
+        &fan_control_task,
+        FAN_CONTROL_TASK_CORE);
+    if (result != pdPASS)
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Failed to create fan control task.");
+        return false;
+    }
 
-    // result = xTaskCreatePinnedToCore(
-    //     envMeasurementTask,
-    //     "env_measurement_task",
-    //     ENV_MEASUREMENT_TASK_STACK_SIZE,
-    //     NULL,
-    //     ENV_MEASUREMENT_TASK_PRIORITY,
-    //     &env_measurement_task,
-    //     ENV_MEASUREMENT_TASK_CORE);
-    // if (result != pdPASS)
-    // {
-    //     ESP_LOGE(SCHEDULING_TAG, "Failed to create environmental measurement task.");
-    //     return false;
-    // }
+    result = xTaskCreatePinnedToCore(
+        envMeasurementTask,
+        "env_measurement_task",
+        ENV_MEASUREMENT_TASK_STACK_SIZE,
+        NULL,
+        ENV_MEASUREMENT_TASK_PRIORITY,
+        &env_measurement_task,
+        ENV_MEASUREMENT_TASK_CORE);
+    if (result != pdPASS)
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Failed to create environmental measurement task.");
+        return false;
+    }
+
+    result = xTaskCreatePinnedToCore(
+        ledControlTask,
+        "led_control_task",
+        LED_CONTROL_TASK_STACK_SIZE,
+        NULL,
+        LED_CONTROL_TASK_PRIORITY,
+        &led_control_task,
+        LED_CONTROL_TASK_CORE);
+    if (result != pdPASS)
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Failed to create led control task.");
+        return false;
+    }
 
     return true;
 }
@@ -160,5 +196,23 @@ void envMeasurementTask(void *pvParameters)
     {
         handle_env_measurement();
         vTaskDelay(ENV_MEASUREMENT_EVENT_FREQUENCY / portTICK_PERIOD_MS);
+    }
+}
+
+void ledControlTask(void *pvParameters)
+{
+    while (true)
+    {
+        handle_led_control();
+        vTaskDelay(LED_CONTROL_EVENT_FREQUENCY / portTICK_PERIOD_MS);
+    }
+}
+
+void energyMonitorTask(void *pvParameters)
+{
+    while (true)
+    {
+        handle_energy_monitor();
+        vTaskDelay(ENERGY_MONITOR_EVENT_FREQUENCY / portTICK_PERIOD_MS);
     }
 }
