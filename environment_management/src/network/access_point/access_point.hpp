@@ -9,45 +9,46 @@
 
 /**
  * @brief Class for storing WiFi/MQTT configuration using NVS.
+ *
+ * This class manages saving and loading configuration data (WiFi and MQTT)
+ * in the ESP32 non-volatile storage (NVS).
  */
 class WiFiCredentialsStore
 {
 public:
     /**
-     * @brief Constructs a new WiFiCredentialsStore object.
-     * @param ns The namespace used for storing preferences. Defaults to "wifi".
+     * @brief Constructor.
+     * @param ns The namespace used for storing preferences (default is "wifi").
      */
     explicit WiFiCredentialsStore(const char *ns = "wifi");
 
     /**
-     * @brief Checks if configuration data is stored.
-     * @return True if configuration exists, false otherwise.
+     * @brief Checks if the configuration has been set.
+     * @return true if configuration exists, false otherwise.
      */
     bool isConfigured() const;
 
     /**
-     * @brief Saves WiFi and MQTT configuration.
+     * @brief Saves the WiFi and MQTT configuration.
      * @param ssid WiFi network name.
      * @param password WiFi network password.
      * @param mqttBroker MQTT broker address.
      * @param mqttPort MQTT broker port.
-     * @param mqttClientId MQTT client identifier.
-     * @return True if the configuration was saved successfully.
+     * @return true if the configuration was saved successfully.
      */
     bool save(const String &ssid, const String &password,
-              const String &mqttBroker, int mqttPort, const String &mqttClientId);
+              const String &mqttBroker, int mqttPort);
 
     /**
-     * @brief Loads stored configuration.
+     * @brief Loads the saved configuration.
      * @param ssid (Output) WiFi network name.
      * @param password (Output) WiFi network password.
      * @param mqttBroker (Output) MQTT broker address.
      * @param mqttPort (Output) MQTT broker port.
-     * @param mqttClientId (Output) MQTT client identifier.
-     * @return True if configuration is complete.
+     * @return true if the configuration is complete.
      */
     bool load(String &ssid, String &password, String &mqttBroker,
-              int &mqttPort, String &mqttClientId);
+              int &mqttPort);
 
 private:
     const char *_namespace; ///< Namespace used for storing preferences.
@@ -56,27 +57,27 @@ private:
 /**
  * @brief Class for managing the Access Point (AP) mode and HTTP configuration server.
  *
- * The AP mode remains active until the user triggers a long-press (handled externally).
+ * The AP mode remains active until a long-press on the button is detected
+ * (handled externally).
  */
 class AccessPoint
 {
 public:
     /**
-     * @brief Constructs a new AccessPoint object.
-     *
+     * @brief Constructor.
      * @param apSSID The SSID for the Access Point.
      * @param apPassword The password for the Access Point.
-     * @param port The port for the HTTP server (default is 80).
+     * @param port The HTTP server port (default is 80).
      */
     AccessPoint(const char *apSSID, const char *apPassword, uint16_t port = 80);
 
     /**
-     * @brief Starts the Access Point and HTTP server.
+     * @brief Starts the Access Point and the HTTP server.
      */
     void start();
 
     /**
-     * @brief Stops the Access Point and HTTP server.
+     * @brief Stops the Access Point and the HTTP server.
      */
     void stop();
 
@@ -91,19 +92,18 @@ public:
     void run();
 
     /**
-     * @brief Checks whether AP mode is currently active.
-     * @return True if AP mode is active.
+     * @brief Checks if the AP mode is active.
+     * @return true if AP mode is active.
      */
     static bool isAPActive();
 
     /**
-     * @brief Signals that AP mode should exit.
+     * @brief Signals that the AP mode should exit.
      */
     static void requestAPExit();
 
     /**
-     * @brief Launches the AP mode in a new FreeRTOS task.
-     *
+     * @brief Starts the AP mode in a separate FreeRTOS task.
      * @param apSSID The SSID for the Access Point.
      * @param apPassword The password for the Access Point.
      */
@@ -111,7 +111,7 @@ public:
 
 private:
     /**
-     * @brief Sets up HTTP server routes.
+     * @brief Configures the HTTP server routes.
      */
     void setupRoutes();
 
@@ -128,10 +128,10 @@ private:
     const char *_apSSID;                    ///< Access Point SSID.
     const char *_apPassword;                ///< Access Point password.
     WebServer _server;                      ///< HTTP server instance.
-    WiFiCredentialsStore _credentialsStore; ///< Configuration storage.
+    WiFiCredentialsStore _credentialsStore; ///< Object for storing configuration.
 
     // Static members controlling AP mode.
-    static volatile bool _apModeActive;    ///< Indicates whether AP mode is active.
-    static volatile bool _apExitRequested; ///< Indicates whether exit from AP mode is requested.
+    static volatile bool _apModeActive;    ///< Indicates if AP mode is active.
+    static volatile bool _apExitRequested; ///< Indicates if exit from AP mode has been requested.
     static TaskHandle_t _apTaskHandle;     ///< Handle for the AP task.
 };

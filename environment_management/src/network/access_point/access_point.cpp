@@ -1,40 +1,64 @@
 #include "access_point.hpp"
+#include "freertos/semphr.h"
+
+// Global mutex to protect Preferences access
+static SemaphoreHandle_t s_preferencesMutex = NULL;
 
 WiFiCredentialsStore::WiFiCredentialsStore(const char *ns)
     : _namespace(ns)
 {
+    if (s_preferencesMutex == NULL)
+    {
+        s_preferencesMutex = xSemaphoreCreateMutex();
+    }
 }
 
 bool WiFiCredentialsStore::isConfigured() const
 {
     Preferences preferences;
-    preferences.begin(_namespace, true);
+    if (!preferences.begin(_namespace, true))
+    {
+        return false;
+    }
     bool configured = preferences.getBool("configured", false);
     preferences.end();
     return configured;
 }
 
 bool WiFiCredentialsStore::save(const String &ssid, const String &password,
-                                const String &mqttBroker, int mqttPort, const String &mqttClientId)
+                                const String &mqttBroker, int mqttPort)
 {
+    // Protect Preferences access with a mutex
+    if (s_preferencesMutex == NULL)
+    {
+        s_preferencesMutex = xSemaphoreCreateMutex();
+    }
+    xSemaphoreTake(s_preferencesMutex, portMAX_DELAY);
+
     Preferences preferences;
     if (!preferences.begin(_namespace, false))
     {
+        xSemaphoreGive(s_preferencesMutex);
         return false;
     }
-    bool result = true;
-    result &= preferences.putString("ssid", ssid);
-    result &= preferences.putString("password", password);
-    result &= preferences.putString("mqtt_broker", mqttBroker);
-    result &= preferences.putInt("mqtt_port", mqttPort);
-    result &= preferences.putString("mqtt_client_id", mqttClientId);
-    result &= preferences.putBool("configured", true);
+
+    bool result1 = preferences.putString("ssid", ssid);
+    bool result2 = preferences.putString("password", password);
+    bool result3 = preferences.putString("mqtt_broker", mqttBroker);
+    bool result4 = preferences.putInt("mqtt_port", mqttPort);
+    bool result5 = preferences.putBool("configured", true);
     preferences.end();
-    return result;
+
+    xSemaphoreGive(s_preferencesMutex);
+
+    Serial.printf("Preference writes: ssid:%d, password:%d, mqtt_broker:%d, mqtt_port:%d, configured:%d\n",
+                  result1, result2, result3, result4, result5);
+
+    return result1 && result2 && result3 && result4 && result5;
 }
 
 bool WiFiCredentialsStore::load(String &ssid, String &password, String &mqttBroker,
-                                int &mqttPort, String &mqttClientId)
+                                int &mqttPort)
 {
     Preferences preferences;
     if (!preferences.begin(_namespace, true))
@@ -45,7 +69,6 @@ bool WiFiCredentialsStore::load(String &ssid, String &password, String &mqttBrok
     password = preferences.getString("password", "");
     mqttBroker = preferences.getString("mqtt_broker", "");
     mqttPort = preferences.getInt("mqtt_port", 1883);
-    mqttClientId = preferences.getString("mqtt_client_id", "");
     bool configured = preferences.getBool("configured", false);
     preferences.end();
     return configured && !ssid.isEmpty() && !password.isEmpty() && !mqttBroker.isEmpty();
@@ -107,8 +130,6 @@ void AccessPoint::handleRoot()
         "<input type='text' id='mqtt_broker' name='mqtt_broker' required><br>"
         "<label for='mqtt_port'>MQTT Broker Port:</label>"
         "<input type='number' id='mqtt_port' name='mqtt_port' value='1883' required><br>"
-        "<label for='mqtt_client_id'>MQTT Client ID (optional):</label>"
-        "<input type='text' id='mqtt_client_id' name='mqtt_client_id'><br>"
         "<button type='submit'>Save</button>"
         "</form></body></html>";
     _server.send(200, "text/html", html);
@@ -123,12 +144,11 @@ void AccessPoint::handleSave()
         String password = _server.arg("password");
         String mqttBroker = _server.arg("mqtt_broker");
         int mqttPort = _server.arg("mqtt_port").toInt();
-        String mqttClientId = _server.hasArg("mqtt_client_id") ? _server.arg("mqtt_client_id") : "ESP32Client";
 
-        if (_credentialsStore.save(ssid, password, mqttBroker, mqttPort, mqttClientId))
+        if (_credentialsStore.save(ssid, password, mqttBroker, mqttPort))
         {
-            Serial.printf("Saved settings: SSID=%s, PASSWORD=%s, MQTT Broker=%s, Port=%d, Client ID=%s\n",
-                          ssid.c_str(), password.c_str(), mqttBroker.c_str(), mqttPort, mqttClientId.c_str());
+            Serial.printf("Saved settings: SSID=%s, PASSWORD=%s, MQTT Broker=%s, Port=%d\n",
+                          ssid.c_str(), password.c_str(), mqttBroker.c_str(), mqttPort);
             _server.send(200, "text/html",
                          "<html><body><h1>Settings Saved. AP remains active until button long-press.</h1></body></html>");
         }

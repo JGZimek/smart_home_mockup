@@ -1,5 +1,6 @@
 #include "scheduling.hpp"
 #include "esp_log.h"
+#include "nvs_flash.h" // Dodana inicjalizacja NVS
 
 #define SCHEDULING_TAG "app_scheduling"
 
@@ -23,23 +24,10 @@ bool esp_setup()
         return false;
     }
 
-    // Attempt to initialize WiFi connection (which loads its configuration from Preferences)
     wifiManager.begin();
-
-    // Attempt to initialize MQTT connection (which loads its configuration from Preferences)
     mqttManager.begin();
-
-    // if (!init_fan_control())
-    // {
-    //     ESP_LOGE(SCHEDULING_TAG, "Fan control initialization failed.");
-    //     return false;
-    // }
-
-    // if (!init_env_measurement())
-    // {
-    //     ESP_LOGE(SCHEDULING_TAG, "Environmental measurement initialization failed.");
-    //     return false;
-    // }
+    // if (!init_fan_control()) { ... }
+    // if (!init_env_measurement()) { ... }
 
     if (!init_scheduling())
     {
@@ -107,7 +95,6 @@ bool init_scheduling()
     //     FAN_CONTROL_TASK_PRIORITY,
     //     &fan_control_task,
     //     FAN_CONTROL_TASK_CORE);
-
     // if (result != pdPASS)
     // {
     //     ESP_LOGE(SCHEDULING_TAG, "Failed to create fan control task.");
@@ -122,7 +109,6 @@ bool init_scheduling()
     //     ENV_MEASUREMENT_TASK_PRIORITY,
     //     &env_measurement_task,
     //     ENV_MEASUREMENT_TASK_CORE);
-
     // if (result != pdPASS)
     // {
     //     ESP_LOGE(SCHEDULING_TAG, "Failed to create environmental measurement task.");
