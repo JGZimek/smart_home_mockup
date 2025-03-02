@@ -1,28 +1,65 @@
 #include "reed_relay.hpp"
 #include "esp_log.h"
 
-#define SENSOR_PIN 5 // GPIO pin where the reed relay is connected
+#define NUM_SENSORS 3 // GPIO pin where the reed relay is connected
 #define SENSOR_TAG "reed_relay"
-#define LED_PIN 4
+
+const int reedPins[NUM_SENSORS] = {26, 25, 33};
+int lastStates[NUM_SENSORS] = {LOW, LOW, LOW};
+char printBuffer[50]; // Buffer for printing messages
 
 bool init_reed_relay()
 {
-    pinMode(SENSOR_PIN, INPUT);   // Configure reed relay as an input
-    pinMode(LED_PIN, OUTPUT); // Configure the LED pin as an output (debugging purposes)
-    digitalWrite(LED_PIN, LOW); // Turn off the LED initially
-    ESP_LOGI(SENSOR_TAG, "Reed relay initialized on GPIO %d", SENSOR_PIN);
+    for (int i = 0; i < NUM_SENSORS; i++) // Configure the reed relay pin as an input
+    {
+        pinMode(reedPins[i], INPUT);
+        ESP_LOGI(SENSOR_TAG, "Reed relay no. %d initialized on GPIO %d", i+1 , reedPins[i]);
 
+    }
+
+    // initial information about the state of reed relays 
+    for (int i = 0; i < NUM_SENSORS; i++)
+    {
+        if (digitalRead(reedPins[i]) == HIGH)
+        {
+            sprintf(printBuffer, "Window no. %d is closed", i+1);
+            Serial.println(printBuffer);
+            lastStates[i] = HIGH;
+        }
+        else
+        {
+            sprintf(printBuffer, "Window no. %d is opened", i+1);
+            Serial.println(printBuffer);
+            lastStates[i] = LOW;
+        }
+    }
     return true;
+}
+
+void reed_relay_logic(int sensorIndex){
+    if (digitalRead(reedPins[sensorIndex]) == HIGH) // Check if the reed relay is closed
+    {
+        if (lastStates[sensorIndex] == LOW){ // If it was open before
+            sprintf(printBuffer, "Window no. %d is closed", sensorIndex+1);
+            Serial.println(printBuffer);
+            lastStates[sensorIndex] = HIGH;
+        }
+    }
+    else
+    {
+        if (lastStates[sensorIndex] == HIGH){ // If it was closed before
+            sprintf(printBuffer, "Window no. %d is open", sensorIndex+1);
+            Serial.println(printBuffer);
+            lastStates[sensorIndex] = LOW;
+        }
+    }
 }
     
 void handle_reed_relay()
 {
-    if (digitalRead(SENSOR_PIN) == HIGH) // Check if the reed relay is closed
+    for (int i = 0; i < NUM_SENSORS; i++)
     {
-        digitalWrite(LED_PIN, HIGH); // Turn on the LED if the door is open
+        reed_relay_logic(i);
     }
-    else
-    {
-        digitalWrite(LED_PIN, LOW); 
-    }
+
 }
