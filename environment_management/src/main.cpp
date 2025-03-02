@@ -12,16 +12,13 @@
 void setup()
 {
   Serial.begin(115200);
-  while (!Serial) 
+  while (!Serial)
     ;
 
-  if (!security_setup())
+  if (!environment_setup())
   {
-    ESP_LOGE(MAIN_TAG, "Security setup failed");
-    return;
+    ESP_LOGE(MAIN_TAG, "Environment setup failed. Halting.");
   }
-
-  // init_scheduling();
 }
 
 /**
