@@ -4,8 +4,6 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-#include "../wifi/wifi.hpp"
-#include "../mqtt/mqtt.hpp"
 #include "../pir/pir.hpp"
 #include "../buzzer/buzzer.hpp"
 #include "../fire_sensor/fire_sensor.hpp"

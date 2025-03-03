@@ -4,12 +4,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-#include "../wifi/wifi.hpp"
 #include "../rfid/rfid.hpp"
 #include "../pinpad/pinpad.hpp"
-#include "../mqtt/mqtt.hpp"
-#include "../button/button.hpp"
-#include "../access_point/access_point.hpp"
 
 /* Task priorities */
 #define WIFI_TASK_PRIORITY 0
@@ -38,9 +34,6 @@
 #define PINPAD_READ_FREQ 100
 #define MQTT_READ_FREQ 100
 #define BUTTON_READ_FREQ 10
-
-/* Button configuration */
-#define BUTTON_PIN 2 // Define the GPIO pin for the button
 
 /**
  * @brief Sets up the ESP32 system, initializes components, and starts scheduling.
@@ -100,24 +93,3 @@ void pinpadTask(void *pvParameters);
  * @param pvParameters Pointer to parameters passed to the task.
  */
 void mqttTask(void *pvParameters);
-
-/**
- * @brief Task to handle button module activities.
- *
- * This task checks for button long press events. If a long press is detected,
- * it triggers Access Point mode to allow reconfiguration of WiFi and MQTT settings.
- *
- * @param pvParameters Pointer to parameters passed to the task.
- */
-void buttonTask(void *pvParameters);
-
-/**
- * @brief Initializes remaining modules after WiFi and MQTT are ready.
- *
- * This function initializes RFID, pinpad, and scheduling. It ensures that
- * these modules are only initialized after successful connections to WiFi
- * and MQTT.
- *
- * @return true if all modules are initialized successfully, false otherwise.
- */
-bool initialize_remaining_modules();

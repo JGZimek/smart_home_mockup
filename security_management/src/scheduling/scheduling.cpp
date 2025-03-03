@@ -77,35 +77,35 @@ bool init_scheduling()
 
     BaseType_t result;
 
-    result = xTaskCreatePinnedToCore(
-        wifiTask,
-        "Wifi Task",
-        WIFI_TASK_STACK_SIZE,
-        NULL,
-        WIFI_TASK_PRIORITY,
-        &wifiTaskHandle,
-        WIFI_CORE);
+    // result = xTaskCreatePinnedToCore(
+    //     wifiTask,
+    //     "Wifi Task",
+    //     WIFI_TASK_STACK_SIZE,
+    //     NULL,
+    //     WIFI_TASK_PRIORITY,
+    //     &wifiTaskHandle,
+    //     WIFI_CORE);
 
-    if (result != pdPASS)
-    {
-        ESP_LOGE(SCHEDULING_TAG, "Failed to create Network Task");
-        return false;
-    }
+    // if (result != pdPASS)
+    // {
+    //     ESP_LOGE(SCHEDULING_TAG, "Failed to create Network Task");
+    //     return false;
+    // }
 
-    result = xTaskCreatePinnedToCore(
-        mqttTask,
-        "MQTT Task",
-        MQTT_TASK_STACK_SIZE,
-        NULL,
-        MQTT_TASK_PRIORITY,
-        &mqttTaskHandle,
-        MQTT_CORE);
+    // result = xTaskCreatePinnedToCore(
+    //     mqttTask,
+    //     "MQTT Task",
+    //     MQTT_TASK_STACK_SIZE,
+    //     NULL,
+    //     MQTT_TASK_PRIORITY,
+    //     &mqttTaskHandle,
+    //     MQTT_CORE);
 
-    if (result != pdPASS)
-    {
-        ESP_LOGE(SCHEDULING_TAG, "Failed to create MQTT Task");
-        return false;
-    }
+    // if (result != pdPASS)
+    // {
+    //     ESP_LOGE(SCHEDULING_TAG, "Failed to create MQTT Task");
+    //     return false;
+    // }
 
     result = xTaskCreatePinnedToCore(
         pirTask,
