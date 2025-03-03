@@ -151,6 +151,20 @@ bool init_scheduling()
         return false;
     }
 
+    result = xTaskCreatePinnedToCore(
+        energyMonitorTask,
+        "energy_monitor_task",
+        ENERGY_MONITOR_TASK_STACK_SIZE,
+        NULL,
+        ENERGY_MONITOR_TASK_PRIORITY,
+        &energy_monitor_task,
+        ENERGY_MONITOR_TASK_CORE);
+    if (result != pdPASS)
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Failed to create energy monitor task.");
+        return false;
+    }
+
     return true;
 }
 
