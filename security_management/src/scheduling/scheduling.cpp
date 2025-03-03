@@ -27,11 +27,11 @@ bool security_setup()
     //     return false;
     // }
 
-    // if (!init_pir())
-    // {
-    //     ESP_LOGE(SCHEDULING_TAG, "Failed to initialize PIR");
-    //     return false;
-    // }
+    if (!init_pir())
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Failed to initialize PIR");
+        return false;
+    }
 
     if (!init_buzzer())
     {
@@ -50,6 +50,7 @@ bool security_setup()
     //     ESP_LOGE(SCHEDULING_TAG, "Failed to initialize Smoke Detector");
     //     return false;
     // }
+
 
     if (!init_tilt_sensor())
     {
@@ -202,7 +203,7 @@ void pirTask(void *pvParameters)
 {
     while (1)
     {
-        // handle_pir();
+        handle_pir();
         vTaskDelay(PIR_READ_FREQ / portTICK_PERIOD_MS);
     }
 }
