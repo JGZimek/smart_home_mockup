@@ -15,13 +15,13 @@
 #include "../energy_monitor/energy_monitor.hpp"
 
 /* Task priorities */
-#define WIFI_TASK_PRIORITY 1
+#define WIFI_TASK_PRIORITY 3
 #define MQTT_TASK_PRIORITY 1
 #define BUTTON_TASK_PRIORITY 2
-#define FAN_CONTROL_TASK_PRIORITY 2
+#define FAN_CONTROL_TASK_PRIORITY 1
 #define ENV_MEASUREMENT_TASK_PRIORITY 1
-#define LED_CONTROL_TASK_PRIORITY 1
-#define ENERGY_MONITOR_TASK_PRIORITY 1
+#define LED_CONTROL_TASK_PRIORITY 3
+#define ENERGY_MONITOR_TASK_PRIORITY 4
 
 /* Core assignments */
 #define WIFI_TASK_CORE 0
