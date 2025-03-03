@@ -11,6 +11,7 @@
 #include "../fire_sensor/fire_sensor.hpp"
 #include "../smoke_detector/smoke_detector.hpp"
 #include "../reed_relay/reed_relay.hpp"
+#include "../tilt_sensor/tilt_sensor.hpp"
 
 /* Task priorities */
 #define WIFI_TASK_PRIORITY 0
@@ -20,6 +21,7 @@
 #define FIRE_SENSOR_TASK_PRIORITY 4
 #define SMOKE_DETECTOR_TASK_PRIORITY 5
 #define REED_RELAY_TASK_PRIORITY 6 // to be improved later (also core assignment)
+#define TILT_SENSOR_TASK_PRIORITY 6 // not sure if this is right priority
 
 /* Core assignments */
 #define WIFI_CORE 0
@@ -29,6 +31,7 @@
 #define FIRE_SENSOR_CORE 1
 #define SMOKE_DETECTOR_CORE 1
 #define REED_RELAY_CORE 1 // to be improved later
+#define TILT_SENSOR_CORE 1 // not sure if this is right
 
 /* Task stack size */
 #define WIFI_TASK_STACK_SIZE 4096
@@ -38,6 +41,7 @@
 #define FIRE_SENSOR_TASK_STACK_SIZE 2048
 #define SMOKE_DETECTOR_TASK_STACK_SIZE 2048
 #define REED_RELAY_TASK_STACK_SIZE 2048 // to be improved later
+#define TILT_SENSOR_TASK_STACK_SIZE 2048 
 
 /* Event frequencies in ms */
 #define WIFI_RECONNECT_FREQ 1000
@@ -47,6 +51,7 @@
 #define FIRE_SENSOR_READ_FREQ 100
 #define SMOKE_DETECTOR_READ_FREQ 100
 #define REED_RELAY_READ_FREQ 100 // to be improved later
+#define TILT_SENSOR_READ_FREQ 100
 
 /**
  * @brief Sets up the security system, initializes components, and starts scheduling.
@@ -131,3 +136,13 @@ void smokeDetectorTask(void *pvParameters);
  * @param pvParameters Task parameters
  */
 void reedRelayTask(void *pvParameters);
+
+/**
+ * @brief Task that handles tilt snesor.
+ *
+ * This task is responsible for handling the tilt sensor.
+ *
+ * @param pvParameters Task parameters
+ */
+void tiltSensorTask(void *pvParameters);
+
