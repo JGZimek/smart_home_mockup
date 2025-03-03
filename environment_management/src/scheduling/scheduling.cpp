@@ -33,11 +33,11 @@ bool esp_setup()
         return false;
     }
 
-    if (!init_env_measurement())
-    {
-        ESP_LOGE(SCHEDULING_TAG, "Environmental measurement initialization failed.");
-        return false;
-    }
+    // if (!init_env_measurement())
+    // {
+    //     ESP_LOGE(SCHEDULING_TAG, "Environmental measurement initialization failed.");
+    //     return false;
+    // }
 
     if (!init_led_control())
     {
@@ -123,19 +123,19 @@ bool init_scheduling()
         return false;
     }
 
-    result = xTaskCreatePinnedToCore(
-        envMeasurementTask,
-        "env_measurement_task",
-        ENV_MEASUREMENT_TASK_STACK_SIZE,
-        NULL,
-        ENV_MEASUREMENT_TASK_PRIORITY,
-        &env_measurement_task,
-        ENV_MEASUREMENT_TASK_CORE);
-    if (result != pdPASS)
-    {
-        ESP_LOGE(SCHEDULING_TAG, "Failed to create environmental measurement task.");
-        return false;
-    }
+    // result = xTaskCreatePinnedToCore(
+    //     envMeasurementTask,
+    //     "env_measurement_task",
+    //     ENV_MEASUREMENT_TASK_STACK_SIZE,
+    //     NULL,
+    //     ENV_MEASUREMENT_TASK_PRIORITY,
+    //     &env_measurement_task,
+    //     ENV_MEASUREMENT_TASK_CORE);
+    // if (result != pdPASS)
+    // {
+    //     ESP_LOGE(SCHEDULING_TAG, "Failed to create environmental measurement task.");
+    //     return false;
+    // }
 
     result = xTaskCreatePinnedToCore(
         ledControlTask,
