@@ -25,7 +25,7 @@ bool init_pir()
     for (int i = 0; i < 4; i++) {
         pinMode(PIR_PINS[i], INPUT);
     }
-    delay(1000); // 1 sec delay for PIR sensor to initialize
+    vTaskDelay (1000 / portTICK_PERIOD_MS); // 1 sec delay for PIR sensor to initialize
     for (int i = 0; i < 4; i++) {
       ESP_LOGI(PIR_TAG, "PIR sensor no. %d initialized on GPIO:  %d", i+1,  PIR_PINS[i]);
     }
