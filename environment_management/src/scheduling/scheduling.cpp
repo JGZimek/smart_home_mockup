@@ -8,7 +8,6 @@ TaskHandle_t fan_control_task;
 TaskHandle_t env_measurement_task;
 TaskHandle_t button_task;
 TaskHandle_t led_control_task;
-TaskHandle_t energy_monitor_task;
 
 WiFiManager wifiManager;
 MqttManager mqttManager;
@@ -33,21 +32,15 @@ bool esp_setup()
         return false;
     }
 
-    // if (!init_env_measurement())
-    // {
-    //     ESP_LOGE(SCHEDULING_TAG, "Environmental measurement initialization failed.");
-    //     return false;
-    // }
+    if (!init_env_measurement())
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Environmental measurement initialization failed.");
+        return false;
+    }
 
     if (!init_led_control())
     {
         ESP_LOGE(SCHEDULING_TAG, "LED control initialization failed.");
-        return false;
-    }
-
-    if (!init_energy_monitor())
-    {
-        ESP_LOGE(SCHEDULING_TAG, "Energy monitor initialization failed.");
         return false;
     }
 
@@ -123,19 +116,19 @@ bool init_scheduling()
         return false;
     }
 
-    // result = xTaskCreatePinnedToCore(
-    //     envMeasurementTask,
-    //     "env_measurement_task",
-    //     ENV_MEASUREMENT_TASK_STACK_SIZE,
-    //     NULL,
-    //     ENV_MEASUREMENT_TASK_PRIORITY,
-    //     &env_measurement_task,
-    //     ENV_MEASUREMENT_TASK_CORE);
-    // if (result != pdPASS)
-    // {
-    //     ESP_LOGE(SCHEDULING_TAG, "Failed to create environmental measurement task.");
-    //     return false;
-    // }
+    result = xTaskCreatePinnedToCore(
+        envMeasurementTask,
+        "env_measurement_task",
+        ENV_MEASUREMENT_TASK_STACK_SIZE,
+        NULL,
+        ENV_MEASUREMENT_TASK_PRIORITY,
+        &env_measurement_task,
+        ENV_MEASUREMENT_TASK_CORE);
+    if (result != pdPASS)
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Failed to create environmental measurement task.");
+        return false;
+    }
 
     result = xTaskCreatePinnedToCore(
         ledControlTask,
@@ -151,19 +144,6 @@ bool init_scheduling()
         return false;
     }
 
-    result = xTaskCreatePinnedToCore(
-        energyMonitorTask,
-        "energy_monitor_task",
-        ENERGY_MONITOR_TASK_STACK_SIZE,
-        NULL,
-        ENERGY_MONITOR_TASK_PRIORITY,
-        &energy_monitor_task,
-        ENERGY_MONITOR_TASK_CORE);
-    if (result != pdPASS)
-    {
-        ESP_LOGE(SCHEDULING_TAG, "Failed to create energy monitor task.");
-        return false;
-    }
 
     return true;
 }
@@ -219,14 +199,5 @@ void ledControlTask(void *pvParameters)
     {
         handle_led_control();
         vTaskDelay(LED_CONTROL_EVENT_FREQUENCY / portTICK_PERIOD_MS);
-    }
-}
-
-void energyMonitorTask(void *pvParameters)
-{
-    while (true)
-    {
-        handle_energy_monitor();
-        vTaskDelay(ENERGY_MONITOR_EVENT_FREQUENCY / portTICK_PERIOD_MS);
     }
 }
