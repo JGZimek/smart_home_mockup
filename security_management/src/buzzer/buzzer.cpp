@@ -4,7 +4,7 @@
 #define BUZZER_PIN 15 // GPIO pin where the buzzer is connected
 #define BUZZER_TAG "app_buzzer"
 
-static bool alarm_active = false; // Zmienna, która przechowuje stan alarmu
+static bool alarm_active = false; // Zmienna, która przechowuje stan alarm
 
 // Variables to manage beep sequences
 static int beep_duration_ms = 500;

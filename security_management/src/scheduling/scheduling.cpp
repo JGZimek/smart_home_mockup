@@ -8,6 +8,8 @@ TaskHandle_t pirTaskHandle = NULL;
 TaskHandle_t buzzerTaskHandle = NULL;
 TaskHandle_t fireSensorTaskHandle = NULL;
 TaskHandle_t smokeDetectorTaskHandle = NULL;
+TaskHandle_t reedRelayTaskHandle = NULL;
+TaskHandle_t tiltSensorTaskHandle = NULL;
 
 bool security_setup()
 {
@@ -25,11 +27,11 @@ bool security_setup()
     //     return false;
     // }
 
-    // if (!init_pir())
-    // {
-    //     ESP_LOGE(SCHEDULING_TAG, "Failed to initialize PIR");
-    //     return false;
-    // }
+    if (!init_pir())
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Failed to initialize PIR");
+        return false;
+    }
 
     if (!init_buzzer())
     {
@@ -48,6 +50,18 @@ bool security_setup()
     //     ESP_LOGE(SCHEDULING_TAG, "Failed to initialize Smoke Detector");
     //     return false;
     // }
+    
+    if(!init_reed_relay())
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Failed to initialize Reed Relay");
+        return false;
+    }
+
+    if (!init_tilt_sensor())
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Failed to initialize Tilt Sensor");
+        return false;
+    }
 
     if (!init_scheduling())
     {
@@ -153,6 +167,37 @@ bool init_scheduling()
         return false;
     }
 
+    result = xTaskCreatePinnedToCore(
+        reedRelayTask,
+        "Reed Relay Task",
+        REED_RELAY_TASK_STACK_SIZE,
+        NULL,
+        REED_RELAY_TASK_PRIORITY,
+        &reedRelayTaskHandle,
+        REED_RELAY_CORE);
+        
+  if (result != pdPASS)
+    {
+        ESP_LOGE(SCHEDULING_TAG, "Failed to create Smoke Detector Task");
+        return false;
+    }
+  
+  result = xTaskCreatePinnedToCore(           
+            tiltSensorTask,
+            "Tilt Sensor Task",
+            TILT_SENSOR_TASK_STACK_SIZE,
+            NULL,
+            TILT_SENSOR_TASK_PRIORITY,
+            &tiltSensorTaskHandle,
+            TILT_SENSOR_CORE);
+
+        if (result != pdPASS)
+        {
+            ESP_LOGE(SCHEDULING_TAG, "Failed to create Tilt Sensor Task");
+            return false;
+        }
+  
+  
     ESP_LOGI(SCHEDULING_TAG, "Scheduling initialized successfully");
 
     return true;
@@ -180,7 +225,7 @@ void pirTask(void *pvParameters)
 {
     while (1)
     {
-        // handle_pir();
+        handle_pir();
         vTaskDelay(PIR_READ_FREQ / portTICK_PERIOD_MS);
     }
 }
@@ -208,6 +253,25 @@ void smokeDetectorTask(void *pvParameters)
     while (1)
     {
         // handle_smoke_detector();
+        vTaskDelay(SMOKE_DETECTOR_READ_FREQ / portTICK_PERIOD_MS);
+    }
+}
+
+
+void reedRelayTask(void *pvParameters)
+{
+    while (1)
+    {
+        handle_reed_relay();
+        vTaskDelay(REED_RELAY_READ_FREQ / portTICK_PERIOD_MS);
+    }
+}
+
+void tiltSensorTask(void *pvParameters)
+{
+    while (1)
+    {
+        handle_tilt_sensor();
         vTaskDelay(SMOKE_DETECTOR_READ_FREQ / portTICK_PERIOD_MS);
     }
 }
